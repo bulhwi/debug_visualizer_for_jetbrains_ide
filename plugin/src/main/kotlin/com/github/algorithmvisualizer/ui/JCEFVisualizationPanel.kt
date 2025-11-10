@@ -66,6 +66,78 @@ class JCEFVisualizationPanel : JPanel(BorderLayout()) {
      * 초기 HTML 페이지 로드
      */
     private fun loadInitialHTML() {
+        // React UI 리소스 로드 시도
+        val indexHtmlPath = "/web/index.html"
+        val resourceUrl = javaClass.getResource(indexHtmlPath)
+
+        logger.warn("=== JCEF LOADING START ===")
+        logger.warn("Looking for React UI at: $indexHtmlPath")
+        logger.warn("Resource URL: $resourceUrl")
+
+        if (resourceUrl != null) {
+            // React UI가 빌드되어 리소스에 포함된 경우
+            logger.warn("✅ React UI found! Loading from resources...")
+
+            try {
+                // HTML 내용 읽기
+                val htmlContent = javaClass.getResourceAsStream(indexHtmlPath)?.bufferedReader()?.use { it.readText() }
+                logger.warn("HTML content length: ${htmlContent?.length ?: 0}")
+
+                if (htmlContent != null) {
+                    // CSS와 JS 파일을 인라인으로 삽입
+                    val cssContent = javaClass.getResourceAsStream("/web/assets/index-BIyWmH3D.css")?.bufferedReader()?.use { it.readText() }
+                    val jsContent = javaClass.getResourceAsStream("/web/assets/index-BQJihk9k.js")?.bufferedReader()?.use { it.readText() }
+
+                    logger.warn("CSS content length: ${cssContent?.length ?: 0}")
+                    logger.warn("JS content length: ${jsContent?.length ?: 0}")
+
+                    if (cssContent != null && jsContent != null) {
+                        // 인라인 HTML 생성
+                        val inlineHtml = """
+                            <!doctype html>
+                            <html lang="en">
+                              <head>
+                                <meta charset="UTF-8" />
+                                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                                <title>Algorithm Visualizer</title>
+                                <style>
+                                $cssContent
+                                </style>
+                              </head>
+                              <body>
+                                <div id="root"></div>
+                                <script type="module">
+                                $jsContent
+                                </script>
+                              </body>
+                            </html>
+                        """.trimIndent()
+
+                        browser.loadHTML(inlineHtml)
+                        logger.warn("✅ React UI loaded successfully with inline assets")
+                    } else {
+                        logger.warn("❌ Failed to load CSS or JS assets, using fallback")
+                        loadFallbackHTML()
+                    }
+                } else {
+                    logger.warn("❌ Failed to read React UI HTML content, loading fallback")
+                    loadFallbackHTML()
+                }
+            } catch (e: Exception) {
+                logger.warn("❌ Error loading React UI: ${e.message}", e)
+                loadFallbackHTML()
+            }
+        } else {
+            // React UI가 없는 경우 fallback HTML 사용
+            logger.warn("❌ React UI not found in resources, loading fallback HTML")
+            loadFallbackHTML()
+        }
+    }
+
+    /**
+     * Fallback HTML 로드 (React UI가 없을 때)
+     */
+    private fun loadFallbackHTML() {
         val html = """
             <!DOCTYPE html>
             <html>
@@ -152,7 +224,7 @@ class JCEFVisualizationPanel : JPanel(BorderLayout()) {
                     <div class="welcome">
                         <div class="emoji">🎨</div>
                         <h1>Algorithm Debug Visualizer</h1>
-                        <p>JCEF 웹뷰가 성공적으로 로드되었습니다!</p>
+                        <p>Fallback UI (React UI not built)</p>
                         <p>디버거를 시작하고 표현식을 평가해보세요.</p>
                     </div>
                     <div id="visualization">
@@ -163,7 +235,7 @@ class JCEFVisualizationPanel : JPanel(BorderLayout()) {
                 </div>
 
                 <script>
-                    console.log('🎨 Algorithm Visualizer - Initializing...');
+                    console.log('🎨 Algorithm Visualizer - Initializing (Fallback)...');
 
                     // Java에서 호출할 수 있는 함수들
                     window.visualizerAPI = {
@@ -212,13 +284,13 @@ class JCEFVisualizationPanel : JPanel(BorderLayout()) {
                         console.log('📤 Sending to Java:', message);
                     };
 
-                    console.log('✅ Visualizer API initialized successfully');
+                    console.log('✅ Visualizer API initialized successfully (Fallback)');
                 </script>
             </body>
             </html>
         """.trimIndent()
 
-        logger.info("Loading initial HTML into JCEF browser")
+        logger.info("Loading fallback HTML into JCEF browser")
         browser.loadHTML(html)
     }
 

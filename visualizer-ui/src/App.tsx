@@ -1,11 +1,24 @@
 import { useState, useEffect } from 'react'
 import './styles/App.css'
+import { ArrayVisualizer } from './components/ArrayVisualizer'
 
 interface VisualizationData {
   expression: string
   value: string
   type?: string
   timestamp: number
+}
+
+/**
+ * 배열 데이터인지 확인
+ */
+function isArrayData(data: VisualizationData): boolean {
+  const value = data.value
+  // "[]" 형식이거나 배열 타입인 경우
+  return (
+    (typeof value === 'string' && value.startsWith('[') && value.endsWith(']')) ||
+    (data.type !== undefined && data.type.includes('[]'))
+  )
 }
 
 function App() {
@@ -43,25 +56,35 @@ function App() {
       <main className="main">
         {data ? (
           <div className="visualization">
-            <div className="data-card">
-              <h2>표현식</h2>
-              <code>{data.expression}</code>
-            </div>
-
-            {data.type && (
-              <div className="data-card">
-                <h2>타입</h2>
-                <code>{data.type}</code>
+            {/* D3.js 시각화 영역 */}
+            {isArrayData(data) && (
+              <div className="visualization-container">
+                <ArrayVisualizer data={data.value} expression={data.expression} />
               </div>
             )}
 
-            <div className="data-card">
-              <h2>값</h2>
-              <pre className="value">{data.value}</pre>
-            </div>
+            {/* 데이터 정보 카드 */}
+            <div className="info-cards">
+              <div className="data-card">
+                <h2>표현식</h2>
+                <code>{data.expression}</code>
+              </div>
 
-            <div className="timestamp">
-              평가 시각: {new Date(data.timestamp).toLocaleTimeString()}
+              {data.type && (
+                <div className="data-card">
+                  <h2>타입</h2>
+                  <code>{data.type}</code>
+                </div>
+              )}
+
+              <div className="data-card">
+                <h2>값</h2>
+                <pre className="value">{data.value}</pre>
+              </div>
+
+              <div className="timestamp">
+                평가 시각: {new Date(data.timestamp).toLocaleTimeString()}
+              </div>
             </div>
           </div>
         ) : (

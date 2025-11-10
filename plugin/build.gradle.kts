@@ -34,6 +34,23 @@ intellij {
 }
 
 tasks {
+    // React UI 빌드 및 복사
+    val buildReactUI by registering(Exec::class) {
+        workingDir = file("../visualizer-ui")
+        commandLine("npm", "run", "build")
+    }
+
+    val copyReactBuild by registering(Copy::class) {
+        dependsOn(buildReactUI)
+        from("../visualizer-ui/dist")
+        into("src/main/resources/web")
+    }
+
+    // processResources가 React UI를 포함하도록 설정
+    processResources {
+        dependsOn(copyReactBuild)
+    }
+
     // JVM 타겟 버전 설정
     withType<JavaCompile> {
         sourceCompatibility = "17"

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizer Test Page</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        }
+        .test-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        .test-controls h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        .test-controls button {
+            display: block;
+            width: 100%;
+            margin: 0.5rem 0;
+            padding: 0.5rem 1rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .test-controls button:hover {
+            background: #5568d3;
+        }
+        .test-controls input {
+            width: 100%;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- Test Controls -->
+    <div class="test-controls">
+        <h3>🧪 Test Controls</h3>
+        <button onclick="testArray()">Test Array</button>
+        <button onclick="testPrimitive()">Test Primitive (int)</button>
+        <button onclick="testString()">Test String</button>
+        <button onclick="testNestedArray()">Test Nested Array</button>
+        <button onclick="clearVisualization()">Clear</button>
+        <hr>
+        <input type="text" id="customExpression" placeholder="Expression name" value="myVar">
+        <input type="text" id="customValue" placeholder="Value" value="42">
+        <input type="text" id="customType" placeholder="Type (optional)" value="int">
+        <button onclick="testCustom()">Send Custom</button>
+    </div>
+
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+        // Wait for visualizerAPI to be ready
+        function waitForAPI(callback) {
+            if (window.visualizerAPI) {
+                callback();
+            } else {
+                setTimeout(() => waitForAPI(callback), 100);
+            }
+        }
+
+        function testArray() {
+            waitForAPI(() => {
+                const data = {
+                    expression: "chars",
+                    value: "['1', '2', '3', '4', '5']",
+                    type: "char[]",
+                    timestamp: Date.now()
+                };
+                window.visualizerAPI.showData(JSON.stringify(data));
+                console.log('📊 Sent array data:', data);
+            });
+        }
+
+        function testPrimitive() {
+            waitForAPI(() => {
+                const data = {
+                    expression: "sum",
+                    value: "42",
+                    type: "int",
+                    timestamp: Date.now()
+                };
+                window.visualizerAPI.showData(JSON.stringify(data));
+                console.log('📊 Sent primitive data:', data);
+            });
+        }
+
+        function testString() {
+            waitForAPI(() => {
+                const data = {
+                    expression: "message",
+                    value: '"Hello, World!"',
+                    type: "String",
+                    timestamp: Date.now()
+                };
+                window.visualizerAPI.showData(JSON.stringify(data));
+                console.log('📊 Sent string data:', data);
+            });
+        }
+
+        function testNestedArray() {
+            waitForAPI(() => {
+                const data = {
+                    expression: "matrix",
+                    value: "[[1, 2, 3], [4, 5, 6], [7, 8, 9]]",
+                    type: "int[][]",
+                    timestamp: Date.now()
+                };
+                window.visualizerAPI.showData(JSON.stringify(data));
+                console.log('📊 Sent nested array data:', data);
+            });
+        }
+
+        function clearVisualization() {
+            waitForAPI(() => {
+                window.visualizerAPI.clear();
+                console.log('🗑️ Cleared visualization');
+            });
+        }
+
+        function testCustom() {
+            waitForAPI(() => {
+                const expression = document.getElementById('customExpression').value;
+                const value = document.getElementById('customValue').value;
+                const type = document.getElementById('customType').value;
+
+                const data = {
+                    expression: expression,
+                    value: value,
+                    type: type || undefined,
+                    timestamp: Date.now()
+                };
+                window.visualizerAPI.showData(JSON.stringify(data));
+                console.log('📊 Sent custom data:', data);
+            });
+        }
+
+        // Log when API is ready
+        waitForAPI(() => {
+            console.log('✅ visualizerAPI is ready!');
+        });
+    </script>
+</body>
+</html>
