@@ -153,9 +153,9 @@ class VisualizerToolWindowPanel(private val project: Project) : JPanel(BorderLay
         SwingUtilities.invokeLater {
             statusLabel.text = message
             statusLabel.foreground = if (isError) {
-                JBUI.CurrentTheme.Label.errorForeground()
+                java.awt.Color.RED
             } else {
-                JBUI.CurrentTheme.Label.foreground()
+                null // 기본 색상 사용
             }
         }
     }
