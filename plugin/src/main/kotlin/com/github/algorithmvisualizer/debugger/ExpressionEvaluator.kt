@@ -100,15 +100,20 @@ class ExpressionEvaluator {
         val future = CompletableFuture<String>()
 
         try {
+            logger.info("Extracting value from XValue type: ${xValue.javaClass.name}")
+
             // Java 디버거의 경우 JavaValue에서 직접 값 추출 시도
             if (xValue is JavaValue) {
                 try {
                     val descriptor = xValue.descriptor
-                    val valueText = descriptor.calcValueName() ?: descriptor.toString()
-                    future.complete(valueText)
-                    return future
+                    val valueText = descriptor.calcValueName()
+                    logger.info("JavaValue calcValueName: $valueText")
+                    if (valueText != null && valueText != "null") {
+                        future.complete(valueText)
+                        return future
+                    }
                 } catch (e: Exception) {
-                    logger.debug("Failed to extract from JavaValue, falling back to computePresentation", e)
+                    logger.warn("Failed to extract from JavaValue", e)
                 }
             }
 
@@ -120,8 +125,11 @@ class ExpressionEvaluator {
                     value: String,
                     hasChildren: Boolean
                 ) {
-                    // 간단한 형태의 setPresentation
-                    future.complete(value)
+                    // 간단한 형태의 setPresentation - 이게 호출되면 value가 실제 값
+                    logger.info("setPresentation(simple) called: type=$type, value=$value, hasChildren=$hasChildren")
+                    if (!future.isDone) {
+                        future.complete(value)
+                    }
                 }
 
                 override fun setPresentation(
@@ -129,13 +137,17 @@ class ExpressionEvaluator {
                     presentation: com.intellij.xdebugger.frame.presentation.XValuePresentation,
                     hasChildren: Boolean
                 ) {
-                    // XValuePresentation 형태
-                    val type = presentation.type ?: "unknown"
-                    future.complete(type)
+                    // XValuePresentation 형태 - 복잡한 객체인 경우
+                    logger.info("setPresentation(XValuePresentation) called: type=${presentation.type}")
+                    if (!future.isDone) {
+                        val type = presentation.type ?: "unknown"
+                        future.complete("$type (use Phase 1-9 for full extraction)")
+                    }
                 }
 
                 override fun setFullValueEvaluator(fullValueEvaluator: com.intellij.xdebugger.frame.XFullValueEvaluator) {
-                    // 전체 값 평가기는 무시
+                    logger.info("setFullValueEvaluator called - full value available")
+                    // 전체 값 평가기는 무시 (Phase 1-9에서 구현)
                 }
             }, com.intellij.xdebugger.frame.XValuePlace.TREE)
 
