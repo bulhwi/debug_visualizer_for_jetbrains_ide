@@ -2,7 +2,10 @@ package com.github.algorithmvisualizer.toolwindow
 
 import com.github.algorithmvisualizer.debugger.DebuggerIntegration
 import com.github.algorithmvisualizer.debugger.DebuggerStateListener
+import com.github.algorithmvisualizer.debugger.ExpressionEvaluator
+import com.github.algorithmvisualizer.ui.JCEFVisualizationPanel
 import com.intellij.openapi.project.Project
+import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextField
@@ -24,6 +27,9 @@ class VisualizerToolWindowPanel(private val project: Project) : JPanel(BorderLay
     private val visualizationArea: JPanel
     private val statusLabel: JBLabel
     private val debuggerIntegration: DebuggerIntegration = DebuggerIntegration.getInstance(project)
+    private val expressionEvaluator: ExpressionEvaluator = ExpressionEvaluator()
+    private var jcefPanel: JCEFVisualizationPanel? = null
+    private val useJCEF: Boolean = JBCefApp.isSupported()
 
     init {
         border = JBUI.Borders.empty(8)
@@ -39,16 +45,17 @@ class VisualizerToolWindowPanel(private val project: Project) : JPanel(BorderLay
         visualizationArea = JPanel(BorderLayout())
         visualizationArea.border = JBUI.Borders.empty(8)
 
-        val welcomeLabel = JBLabel(
-            "<html><center>" +
-            "<h2>Algorithm Debug Visualizer</h2>" +
-            "<p>디버깅 세션을 시작하고 표현식을 입력하세요.</p>" +
-            "<br>" +
-            "<p style='color: gray;'>예: myArray, myTree, graph</p>" +
-            "</center></html>",
-            SwingConstants.CENTER
-        )
-        visualizationArea.add(welcomeLabel, BorderLayout.CENTER)
+        // JCEF 지원 여부에 따라 다른 UI 표시
+        if (useJCEF) {
+            try {
+                jcefPanel = JCEFVisualizationPanel()
+                visualizationArea.add(jcefPanel!!, BorderLayout.CENTER)
+            } catch (e: Exception) {
+                showFallbackWelcome()
+            }
+        } else {
+            showFallbackWelcome()
+        }
 
         val scrollPane = JBScrollPane(visualizationArea)
         add(scrollPane, BorderLayout.CENTER)
@@ -176,35 +183,103 @@ class VisualizerToolWindowPanel(private val project: Project) : JPanel(BorderLay
 
         updateStatus("평가 중: $expression")
 
-        // TODO: 실제 표현식 평가 로직 구현
-        // Phase 1-4에서 구현 예정
+        // 표현식 평가 실행
+        val session = debuggerIntegration.getCurrentSession()!!
+        expressionEvaluator.evaluateAndExtract(session, expression)
+            .thenAccept { (value, type) ->
+                SwingUtilities.invokeLater {
+                    if (value != null) {
+                        showEvaluationResult(expression, value, type)
+                        updateStatus("평가 완료: $expression = $value")
+                    } else {
+                        updateStatus("평가 실패: 값을 가져올 수 없습니다", isError = true)
+                    }
+                }
+            }
+            .exceptionally { throwable ->
+                SwingUtilities.invokeLater {
+                    updateStatus("평가 중 오류 발생: ${throwable.message}", isError = true)
+                }
+                null
+            }
+    }
 
-        // 임시 메시지
-        SwingUtilities.invokeLater {
-            showPlaceholderVisualization(expression)
-            updateStatus("시각화 준비 완료 (Phase 1-4에서 실제 구현 예정)")
+    /**
+     * Fallback 환영 메시지 표시 (JCEF 미지원 시)
+     */
+    private fun showFallbackWelcome() {
+        val welcomeLabel = JBLabel(
+            "<html><center>" +
+            "<h2>Algorithm Debug Visualizer</h2>" +
+            "<p>디버깅 세션을 시작하고 표현식을 입력하세요.</p>" +
+            "<br>" +
+            "<p style='color: gray;'>예: myArray, myTree, graph</p>" +
+            "<p style='color: orange;'>JCEF가 지원되지 않아 기본 UI를 사용합니다.</p>" +
+            "</center></html>",
+            SwingConstants.CENTER
+        )
+        visualizationArea.add(welcomeLabel, BorderLayout.CENTER)
+    }
+
+    /**
+     * 평가 결과 표시
+     */
+    private fun showEvaluationResult(expression: String, value: String, type: String?) {
+        if (useJCEF && jcefPanel != null) {
+            // JCEF를 사용하여 표시
+            val data = buildString {
+                append("{")
+                append("\"expression\": \"${escapeJson(expression)}\",")
+                append("\"value\": \"${escapeJson(value)}\",")
+                if (type != null) {
+                    append("\"type\": \"${escapeJson(type)}\",")
+                }
+                append("\"timestamp\": ${System.currentTimeMillis()}")
+                append("}")
+            }
+            jcefPanel?.showVisualization(data)
+        } else {
+            // Fallback: Swing 레이블 사용
+            visualizationArea.removeAll()
+
+            val resultText = buildString {
+                append("<html><div style='padding: 16px;'>")
+                append("<h3>평가 결과</h3>")
+                append("<table style='border-collapse: collapse; width: 100%;'>")
+                append("<tr><td style='padding: 8px; border: 1px solid gray;'><b>표현식:</b></td>")
+                append("<td style='padding: 8px; border: 1px solid gray;'>$expression</td></tr>")
+                if (type != null) {
+                    append("<tr><td style='padding: 8px; border: 1px solid gray;'><b>타입:</b></td>")
+                    append("<td style='padding: 8px; border: 1px solid gray;'>$type</td></tr>")
+                }
+                append("<tr><td style='padding: 8px; border: 1px solid gray;'><b>값:</b></td>")
+                append("<td style='padding: 8px; border: 1px solid gray;'>$value</td></tr>")
+                append("</table>")
+                append("<br>")
+                append("<p style='color: gray; font-size: 0.9em;'>")
+                append("D3.js 시각화는 Phase 1-7에서 구현 예정")
+                append("</p>")
+                append("</div></html>")
+            }
+
+            val resultLabel = JBLabel(resultText, SwingConstants.LEFT)
+            resultLabel.verticalAlignment = SwingConstants.TOP
+
+            visualizationArea.add(resultLabel, BorderLayout.CENTER)
+            visualizationArea.revalidate()
+            visualizationArea.repaint()
         }
     }
 
     /**
-     * 플레이스홀더 시각화 표시 (개발 중)
+     * JSON 문자열 이스케이프
      */
-    private fun showPlaceholderVisualization(expression: String) {
-        visualizationArea.removeAll()
-
-        val placeholder = JBLabel(
-            "<html><center>" +
-            "<h3>시각화: $expression</h3>" +
-            "<br>" +
-            "<p>이 영역에 시각화가 표시됩니다.</p>" +
-            "<p style='color: gray;'>Phase 1-5 (JCEF 웹뷰)와 Phase 1-7 (D3.js 렌더러)에서 구현 예정</p>" +
-            "</center></html>",
-            SwingConstants.CENTER
-        )
-
-        visualizationArea.add(placeholder, BorderLayout.CENTER)
-        visualizationArea.revalidate()
-        visualizationArea.repaint()
+    private fun escapeJson(str: String): String {
+        return str.replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("\t", "\\t")
     }
 
     /**
@@ -225,10 +300,21 @@ class VisualizerToolWindowPanel(private val project: Project) : JPanel(BorderLay
      * 시각화 영역 클리어
      */
     fun clearVisualization() {
-        visualizationArea.removeAll()
-        visualizationArea.revalidate()
-        visualizationArea.repaint()
+        if (useJCEF && jcefPanel != null) {
+            jcefPanel?.clearVisualization()
+        } else {
+            visualizationArea.removeAll()
+            visualizationArea.revalidate()
+            visualizationArea.repaint()
+        }
         updateStatus("시각화가 지워졌습니다")
+    }
+
+    /**
+     * 리소스 정리
+     */
+    fun dispose() {
+        jcefPanel?.dispose()
     }
 
     /**
