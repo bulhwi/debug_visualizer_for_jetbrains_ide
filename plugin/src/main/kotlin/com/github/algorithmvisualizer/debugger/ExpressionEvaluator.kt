@@ -137,11 +137,29 @@ class ExpressionEvaluator {
                     presentation: com.intellij.xdebugger.frame.presentation.XValuePresentation,
                     hasChildren: Boolean
                 ) {
-                    // XValuePresentation 형태 - 복잡한 객체인 경우
-                    logger.info("setPresentation(XValuePresentation) called: type=${presentation.type}")
+                    // XValuePresentation 형태 - 배열이나 복잡한 객체
+                    logger.warn("setPresentation(XValuePresentation) called: type=${presentation.type}, separator=${presentation.separator}")
+
                     if (!future.isDone) {
-                        val type = presentation.type ?: "unknown"
-                        future.complete("$type (use Phase 1-9 for full extraction)")
+                        // XValuePresentation을 문자열로 변환 시도
+                        val result = try {
+                            // 리플렉션을 사용하여 내부 값 추출 시도
+                            val presentationClass = presentation.javaClass
+                            val methods = presentationClass.methods
+
+                            // getValue 같은 메서드가 있는지 확인
+                            val valueMethod = methods.firstOrNull { it.name == "getValue" || it.name == "getValueText" }
+                            if (valueMethod != null) {
+                                valueMethod.invoke(presentation)?.toString() ?: presentation.type
+                            } else {
+                                "${presentation.type} (${presentation.separator})"
+                            }
+                        } catch (e: Exception) {
+                            logger.warn("Failed to extract from XValuePresentation", e)
+                            presentation.type ?: "unknown"
+                        }
+
+                        future.complete(result)
                     }
                 }
 
