@@ -1,40 +1,40 @@
-# Architecture Design
+# 아키텍처 설계
 
-## Overview
+## 개요
 
-The Algorithm Debug Visualizer is built on the IntelliJ Platform and consists of three main components:
+알고리즘 디버그 시각화 도구는 IntelliJ Platform을 기반으로 구축되며 세 가지 주요 컴포넌트로 구성됩니다:
 
-1. **Plugin Core**: Integrates with JetBrains IDE debugger
-2. **Visualization Engine**: Renders data structures using web technologies
-3. **Data Extractors**: Language-specific modules for extracting debug data
+1. **플러그인 코어**: JetBrains IDE 디버거와 통합
+2. **시각화 엔진**: 웹 기술을 사용하여 데이터 구조 렌더링
+3. **데이터 추출기**: 디버그 데이터 추출을 위한 언어별 모듈
 
-## System Architecture
+## 시스템 아키텍처
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                     JetBrains IDE                           │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │              Plugin Core (Kotlin)                      │  │
+│  │              플러그인 코어 (Kotlin)                     │  │
 │  │  ┌──────────────┐  ┌──────────────┐  ┌─────────────┐ │  │
-│  │  │   Debugger   │  │  Expression  │  │    Tool     │ │  │
-│  │  │  Integration │←→│   Evaluator  │←→│   Window    │ │  │
+│  │  │   디버거     │  │  표현식      │  │    도구     │ │  │
+│  │  │   통합       │←→│  평가기      │←→│   윈도우    │ │  │
 │  │  └──────────────┘  └──────────────┘  └─────────────┘ │  │
 │  │         ↓                  ↓                 ↓        │  │
 │  │  ┌──────────────────────────────────────────────────┐ │  │
-│  │  │         Data Extraction Layer                    │ │  │
+│  │  │         데이터 추출 레이어                        │ │  │
 │  │  │  ┌────────┐ ┌────────┐ ┌────────┐ ┌──────────┐ │ │  │
 │  │  │  │  Java  │ │ Kotlin │ │ Python │ │ JS/TS    │ │ │  │
 │  │  │  └────────┘ └────────┘ └────────┘ └──────────┘ │ │  │
 │  │  └──────────────────────────────────────────────────┘ │  │
 │  │         ↓                                              │  │
 │  │  ┌──────────────────────────────────────────────────┐ │  │
-│  │  │            JSON Data Bridge                      │ │  │
+│  │  │            JSON 데이터 브리지                     │ │  │
 │  │  └──────────────────────────────────────────────────┘ │  │
 │  │         ↓                                              │  │
 │  │  ┌──────────────────────────────────────────────────┐ │  │
-│  │  │       JCEF WebView Container                     │ │  │
+│  │  │       JCEF WebView 컨테이너                      │ │  │
 │  │  │  ┌────────────────────────────────────────────┐ │ │  │
-│  │  │  │    Visualization UI (TypeScript/React)     │ │ │  │
+│  │  │  │    시각화 UI (TypeScript/React)           │ │ │  │
 │  │  │  │  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────────┐ │ │ │  │
 │  │  │  │  │ D3.js│ │Plotly│ │Cytosc│ │ Controls │ │ │ │  │
 │  │  │  │  └──────┘ └──────┘ └──────┘ └──────────┘ │ │ │  │
@@ -44,48 +44,48 @@ The Algorithm Debug Visualizer is built on the IntelliJ Platform and consists of
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Component Details
+## 컴포넌트 상세
 
-### 1. Plugin Core
+### 1. 플러그인 코어
 
-**Responsibilities:**
-- Integrate with IntelliJ Platform debugger APIs
-- Manage tool window lifecycle
-- Handle user interactions (expression input, settings)
-- Coordinate between debugger and visualization
+**책임:**
+- IntelliJ Platform 디버거 API와 통합
+- 도구 윈도우 생명주기 관리
+- 사용자 인터랙션 처리 (표현식 입력, 설정)
+- 디버거와 시각화 간 조정
 
-**Key Classes:**
+**주요 클래스:**
 ```kotlin
-// Main plugin entry point
+// 메인 플러그인 진입점
 class AlgorithmVisualizerPlugin : DumbAware
 
-// Tool window factory
+// 도구 윈도우 팩토리
 class VisualizerToolWindowFactory : ToolWindowFactory
 
-// Debugger integration
+// 디버거 통합
 class DebuggerIntegration {
     fun evaluateExpression(expression: String): Any?
     fun getCurrentStackFrame(): XStackFrame?
     fun addBreakpointListener()
 }
 
-// Expression evaluator
+// 표현식 평가기
 class ExpressionEvaluator {
     fun evaluate(expression: String, context: XDebuggerEvaluator): XValue
 }
 ```
 
-**APIs Used:**
+**사용된 API:**
 - `com.intellij.xdebugger.XDebuggerManager`
 - `com.intellij.xdebugger.evaluation.XDebuggerEvaluator`
 - `com.intellij.xdebugger.frame.XValue`
 - `com.intellij.ui.jcef.JBCefBrowser`
 
-### 2. Data Extraction Layer
+### 2. 데이터 추출 레이어
 
-**Purpose:** Convert language-specific data structures into a universal JSON format for visualization.
+**목적:** 언어별 데이터 구조를 시각화를 위한 범용 JSON 형식으로 변환합니다.
 
-**Universal Visualization Data Format:**
+**범용 시각화 데이터 형식:**
 ```json
 {
   "kind": "graph" | "tree" | "array" | "table" | "plotly" | "grid",
@@ -96,7 +96,7 @@ class ExpressionEvaluator {
     "type": "TreeNode"
   },
   "data": {
-    // Kind-specific data
+    // kind별 데이터
   },
   "config": {
     "layout": "hierarchical" | "force-directed" | "grid",
@@ -106,7 +106,7 @@ class ExpressionEvaluator {
 }
 ```
 
-**Java/Kotlin Extractor:**
+**Java/Kotlin 추출기:**
 ```kotlin
 interface VisualizationExtractor {
     fun canExtract(value: XValue): Boolean
@@ -115,16 +115,16 @@ interface VisualizationExtractor {
 
 class TreeNodeExtractor : VisualizationExtractor {
     override fun extract(value: XValue): VisualizationData {
-        // Use JDI to inspect object fields
-        // Build tree structure
+        // JDI를 사용하여 객체 필드 검사
+        // 트리 구조 구축
         return TreeVisualizationData(nodes, edges)
     }
 }
 ```
 
-**Python Extractor:**
+**Python 추출기:**
 ```python
-# Injected into debug session
+# 디버그 세션에 주입됨
 class DebugVisualizerHelper:
     @staticmethod
     def extract_tree(obj):
@@ -139,16 +139,16 @@ class DebugVisualizerHelper:
             }
 ```
 
-### 3. Visualization Engine
+### 3. 시각화 엔진
 
-**Technology Stack:**
-- **Framework**: React + TypeScript
-- **Rendering**: D3.js (graphs/trees), Plotly.js (charts), Cytoscape.js (complex networks)
-- **Communication**: CEF JavaScript Bridge
+**기술 스택:**
+- **프레임워크**: React + TypeScript
+- **렌더링**: D3.js (그래프/트리), Plotly.js (차트), Cytoscape.js (복잡한 네트워크)
+- **통신**: CEF JavaScript Bridge
 
-**Component Structure:**
+**컴포넌트 구조:**
 ```typescript
-// Main visualizer controller
+// 메인 시각화 컨트롤러
 class VisualizerController {
     private renderers: Map<string, Renderer>;
 
@@ -158,50 +158,50 @@ class VisualizerController {
     }
 }
 
-// Graph renderer using D3.js
+// D3.js를 사용한 그래프 렌더러
 class GraphRenderer implements Renderer {
     render(data: GraphData, config: Config) {
-        // D3.js force-directed graph
+        // D3.js force-directed 그래프
     }
 }
 
-// Tree renderer
+// 트리 렌더러
 class TreeRenderer implements Renderer {
     render(data: TreeData, config: Config) {
-        // D3.js hierarchical layout
+        // D3.js 계층적 레이아웃
     }
 }
 ```
 
-## Data Flow
+## 데이터 흐름
 
-### Expression Evaluation Flow
+### 표현식 평가 흐름
 
 ```
-User Input → Plugin Core → Debugger API → Language Runtime
+사용자 입력 → 플러그인 코어 → 디버거 API → 언어 런타임
                 ↓
-         Data Extractor → Universal JSON Format
+         데이터 추출기 → 범용 JSON 형식
                 ↓
-         JCEF Bridge → WebView
+         JCEF 브리지 → WebView
                 ↓
-         Visualization Engine → Rendered Output
+         시각화 엔진 → 렌더링된 출력
 ```
 
-### Step-by-Step Process
+### 단계별 프로세스
 
-1. **User enters expression** (e.g., `myArray`)
-2. **Plugin evaluates expression** using `XDebuggerEvaluator`
-3. **XValue is retrieved** from current stack frame
-4. **Data extractor identifies type** and converts to JSON
-5. **JSON sent to WebView** via JCEF JavaScript bridge
-6. **React component receives data** and selects appropriate renderer
-7. **Renderer visualizes data** using D3.js/Plotly/etc.
+1. **사용자가 표현식 입력** (예: `myArray`)
+2. **플러그인이 표현식 평가** `XDebuggerEvaluator` 사용
+3. **현재 스택 프레임에서 XValue 검색**
+4. **데이터 추출기가 타입 식별** 및 JSON으로 변환
+5. **JCEF JavaScript 브리지를 통해 JSON을 WebView로 전송**
+6. **React 컴포넌트가 데이터 수신** 및 적절한 렌더러 선택
+7. **렌더러가 D3.js/Plotly 등을 사용하여 데이터 시각화**
 
-## Configuration & Extensibility
+## 설정 및 확장성
 
-### Custom Extractors
+### 커스텀 추출기
 
-Users can define custom extractors for their data structures:
+사용자는 자신의 데이터 구조에 대한 커스텀 추출기를 정의할 수 있습니다:
 
 ```kotlin
 // plugin.xml
@@ -209,82 +209,82 @@ Users can define custom extractors for their data structures:
     <visualizationExtractor implementation="com.mycompany.MyCustomExtractor"/>
 </extensions>
 
-// Implementation
+// 구현
 class MyCustomExtractor : VisualizationExtractor {
     override fun canExtract(value: XValue): Boolean {
         return value.type == "com.mycompany.MyDataStructure"
     }
 
     override fun extract(value: XValue): VisualizationData {
-        // Custom extraction logic
+        // 커스텀 추출 로직
     }
 }
 ```
 
-### Custom Visualizers
+### 커스텀 시각화 도구
 
-Users can add custom visualization types:
+사용자는 커스텀 시각화 타입을 추가할 수 있습니다:
 
 ```typescript
-// Register custom visualizer
+// 커스텀 시각화 도구 등록
 VisualizerRegistry.register('myCustomViz', {
     canRender: (data) => data.kind === 'myCustom',
     render: (data, container) => {
-        // Custom D3.js/Canvas rendering
+        // 커스텀 D3.js/Canvas 렌더링
     }
 });
 ```
 
-## Performance Considerations
+## 성능 고려사항
 
-### 1. Large Data Structures
-- **Pagination**: Limit nodes/elements displayed (default 1000)
-- **Virtual scrolling**: For array/table views
-- **Level-based rendering**: For deep trees (show first N levels)
+### 1. 대용량 데이터 구조
+- **페이지네이션**: 표시되는 노드/요소 제한 (기본 1000개)
+- **가상 스크롤링**: 배열/테이블 뷰용
+- **레벨 기반 렌더링**: 깊은 트리용 (처음 N 레벨만 표시)
 
-### 2. Real-time Updates
-- **Debouncing**: Limit refresh rate during stepping
-- **Incremental updates**: Only update changed nodes
-- **WebWorker**: Heavy computation in background thread
+### 2. 실시간 업데이트
+- **디바운싱**: 스테핑 중 새로고침 빈도 제한
+- **증분 업데이트**: 변경된 노드만 업데이트
+- **WebWorker**: 백그라운드 스레드에서 무거운 계산
 
-### 3. Memory Management
-- **Lazy loading**: Load visualization data on-demand
-- **Cleanup**: Dispose of old visualizations when switching
-- **Weak references**: Avoid memory leaks in debugger integration
+### 3. 메모리 관리
+- **지연 로딩**: 필요 시 시각화 데이터 로드
+- **정리**: 전환 시 이전 시각화 폐기
+- **약한 참조**: 디버거 통합에서 메모리 누수 방지
 
-## Security
+## 보안
 
-### 1. Code Injection Prevention
-- Sanitize all user input expressions
-- Use safe evaluation APIs only
-- No `eval()` in visualization code
+### 1. 코드 인젝션 방지
+- 모든 사용자 입력 표현식 새니타이제이션
+- 안전한 평가 API만 사용
+- 시각화 코드에 `eval()` 사용 금지
 
-### 2. Sandbox
-- JCEF runs in isolated context
-- No file system access from WebView
-- CSP (Content Security Policy) headers
+### 2. 샌드박스
+- JCEF는 격리된 컨텍스트에서 실행
+- WebView에서 파일 시스템 접근 불가
+- CSP (Content Security Policy) 헤더
 
-## Testing Strategy
+## 테스트 전략
 
-### 1. Unit Tests
-- Data extractors (mock XValue objects)
-- Visualization components (mock data)
-- Expression evaluation logic
+### 1. 단위 테스트
+- 데이터 추출기 (mock XValue 객체)
+- 시각화 컴포넌트 (mock 데이터)
+- 표현식 평가 로직
 
-### 2. Integration Tests
-- Full plugin in test IDE instance
-- Sample projects with known data structures
-- Debugger state simulation
+### 2. 통합 테스트
+- 테스트 IDE 인스턴스에서 전체 플러그인
+- 알려진 데이터 구조가 있는 샘플 프로젝트
+- 디버거 상태 시뮬레이션
 
-### 3. UI Tests
-- Screenshot comparison
-- Interaction testing (click, zoom, pan)
-- Performance benchmarks
+### 3. UI 테스트
+- 스크린샷 비교
+- 인터랙션 테스트 (클릭, 줌, 팬)
+- 성능 벤치마크
 
-## Future Enhancements
+## 향후 개선사항
 
-1. **Animation playback**: Record and replay execution
-2. **Diff view**: Compare data structures between breakpoints
-3. **Export**: Save visualizations as PNG/SVG
-4. **Collaboration**: Share visualizations with team
-5. **AI assistance**: Suggest optimal visualization for data type
+1. **애니메이션 재생**: 실행 기록 및 재생
+2. **차이점 뷰**: 중단점 간 데이터 구조 비교
+3. **내보내기**: 시각화를 PNG/SVG로 저장
+4. **협업**: 팀과 시각화 공유
+5. **AI 지원**: 데이터 타입에 최적의 시각화 제안

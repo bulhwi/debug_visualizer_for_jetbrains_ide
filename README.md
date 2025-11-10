@@ -1,180 +1,180 @@
-# Algorithm Debug Visualizer for JetBrains IDEs
+# JetBrains IDE용 알고리즘 디버그 시각화 도구
 
-A powerful debugging visualization plugin for JetBrains IDEs (IntelliJ IDEA, PyCharm, WebStorm, CLion, etc.) that helps developers understand algorithm execution through rich visual representations.
+JetBrains IDE(IntelliJ IDEA, PyCharm, WebStorm, CLion 등)를 위한 강력한 디버깅 시각화 플러그인으로, 풍부한 시각적 표현을 통해 개발자가 알고리즘 실행을 이해할 수 있도록 돕습니다.
 
-## Motivation
+## 개발 동기
 
-Inspired by [VSCode Debug Visualizer](https://github.com/hediet/vscode-debug-visualizer), this plugin brings comprehensive algorithm visualization capabilities to the JetBrains ecosystem with enhanced support for multiple programming languages and algorithm types.
+[VSCode Debug Visualizer](https://github.com/hediet/vscode-debug-visualizer)에서 영감을 받아, 이 플러그인은 JetBrains 생태계에 포괄적인 알고리즘 시각화 기능을 제공하며, 다양한 프로그래밍 언어와 알고리즘 유형에 대한 향상된 지원을 제공합니다.
 
-## Features
+## 주요 기능
 
-### Supported Visualizations
+### 지원하는 시각화
 
-- **Graph Structures**: Visualize graphs with nodes and edges (directed/undirected, weighted)
-- **Tree Structures**: Binary trees, BST, AVL, Red-Black trees, Tries, Segment trees
-- **Arrays & Lists**: Bar charts, grid views, heatmaps with pointer/window highlighting
-- **Tables**: DP tables, adjacency matrices, distance tables
-- **Charts**: Line graphs, histograms, pie charts (Plotly-based)
-- **Custom Visualizations**: Define your own visualization logic
+- **그래프 구조**: 노드와 엣지가 있는 그래프 시각화 (방향/무방향, 가중치)
+- **트리 구조**: 이진 트리, BST, AVL, Red-Black 트리, Trie, 세그먼트 트리
+- **배열 & 리스트**: 막대 그래프, 그리드 뷰, 포인터/윈도우 하이라이팅이 있는 히트맵
+- **테이블**: DP 테이블, 인접 행렬, 거리 테이블
+- **차트**: 선 그래프, 히스토그램, 파이 차트 (Plotly 기반)
+- **커스텀 시각화**: 자체 시각화 로직 정의 가능
 
-### Algorithm Types Coverage
+### 알고리즘 유형 커버리지
 
-1. **Array/List Algorithms**
-   - Sorting (Bubble, Quick, Merge, Heap sort)
-   - Two pointers, Sliding window
-   - Subarray problems
+1. **배열/리스트 알고리즘**
+   - 정렬 (버블, 퀵, 병합, 힙 정렬)
+   - 투 포인터, 슬라이딩 윈도우
+   - 부분 배열 문제
 
-2. **Tree Algorithms**
-   - Traversals (Preorder, Inorder, Postorder, Level-order)
-   - BST operations
-   - Balanced tree rotations
-   - Tree modifications
+2. **트리 알고리즘**
+   - 순회 (전위, 중위, 후위, 레벨 순서)
+   - BST 연산
+   - 균형 트리 회전
+   - 트리 수정
 
-3. **Graph Algorithms**
-   - DFS/BFS with step-by-step traversal
-   - Shortest path (Dijkstra, Bellman-Ford, Floyd-Warshall)
-   - MST (Kruskal, Prim)
-   - Topological sort
-   - Network flow
+3. **그래프 알고리즘**
+   - 단계별 순회가 있는 DFS/BFS
+   - 최단 경로 (다익스트라, 벨만-포드, 플로이드-워셜)
+   - MST (크루스칼, 프림)
+   - 위상 정렬
+   - 네트워크 플로우
 
-4. **Dynamic Programming**
-   - DP table visualization with fill order
-   - Backtracking path highlighting
-   - Memoization state tracking
+4. **동적 프로그래밍**
+   - 채우기 순서가 있는 DP 테이블 시각화
+   - 백트래킹 경로 하이라이팅
+   - 메모이제이션 상태 추적
 
-5. **Backtracking**
-   - Decision tree visualization
-   - Board/grid states (N-Queens, Sudoku)
-   - Pruning visualization
+5. **백트래킹**
+   - 결정 트리 시각화
+   - 보드/그리드 상태 (N-Queens, 스도쿠)
+   - 가지치기 시각화
 
-6. **String Algorithms**
-   - Pattern matching (KMP, Rabin-Karp)
-   - Character-level highlighting
-   - Failure function tables
+6. **문자열 알고리즘**
+   - 패턴 매칭 (KMP, Rabin-Karp)
+   - 문자 단위 하이라이팅
+   - 실패 함수 테이블
 
-7. **Heap/Priority Queue**
-   - Heap tree structure
-   - Parent-child relationships
-   - Heap property validation
+7. **힙/우선순위 큐**
+   - 힙 트리 구조
+   - 부모-자식 관계
+   - 힙 속성 검증
 
-8. **Advanced Data Structures**
-   - Union-Find (Disjoint Set) with set grouping
-   - Fenwick Tree (BIT)
-   - LRU Cache state
-   - Stack/Queue operations
+8. **고급 자료구조**
+   - 집합 그룹화가 있는 Union-Find (Disjoint Set)
+   - 펜윅 트리 (BIT)
+   - LRU 캐시 상태
+   - 스택/큐 연산
 
-### Language Support
+### 언어 지원
 
-#### Tier 1 (Full Support - Automatic Data Extraction)
+#### Tier 1 (완전 지원 - 자동 데이터 추출)
 - Java
 - Kotlin
 - Python
 - JavaScript/TypeScript
 
-#### Tier 2 (Basic Support - JSON Serialization)
+#### Tier 2 (기본 지원 - JSON 직렬화)
 - C++
 - Go
 - Rust
 - Scala
 
-#### Tier 3 (Limited Support)
+#### Tier 3 (제한적 지원)
 - C#
 - PHP
 - Ruby
 
-## Architecture
+## 아키텍처
 
 ```
 algorithm-debug-visualizer/
-├── plugin/                 # IntelliJ Platform plugin code
+├── plugin/                 # IntelliJ Platform 플러그인 코드
 │   ├── src/
 │   │   ├── main/
-│   │   │   ├── kotlin/    # Plugin logic
-│   │   │   └── resources/ # Plugin configuration
+│   │   │   ├── kotlin/    # 플러그인 로직
+│   │   │   └── resources/ # 플러그인 설정
 │   │   └── test/
 │   └── build.gradle.kts
-├── visualizer-ui/         # Web-based visualization UI
+├── visualizer-ui/         # 웹 기반 시각화 UI
 │   ├── src/
-│   │   ├── components/    # React/Vue components
-│   │   ├── visualizers/   # Visualization implementations
+│   │   ├── components/    # React/Vue 컴포넌트
+│   │   ├── visualizers/   # 시각화 구현
 │   │   └── styles/
 │   └── package.json
-├── data-extraction/       # Language-specific data extractors
+├── data-extraction/       # 언어별 데이터 추출기
 │   ├── java/
 │   ├── kotlin/
 │   ├── python/
 │   └── javascript/
-└── docs/                  # Documentation
+└── docs/                  # 문서
     ├── architecture.md
     ├── api-reference.md
     └── developer-guide.md
 ```
 
-## Technology Stack
+## 기술 스택
 
-- **Plugin Framework**: IntelliJ Platform SDK
-- **UI Rendering**: JCEF (Java Chromium Embedded Framework)
-- **Visualization Libraries**: D3.js, Plotly.js, Cytoscape.js
-- **Debugger Integration**: IntelliJ Platform Debugger API
-- **Language Support**:
+- **플러그인 프레임워크**: IntelliJ Platform SDK
+- **UI 렌더링**: JCEF (Java Chromium Embedded Framework)
+- **시각화 라이브러리**: D3.js, Plotly.js, Cytoscape.js
+- **디버거 통합**: IntelliJ Platform Debugger API
+- **언어 지원**:
   - JVM: JDI (Java Debug Interface)
-  - Python: debugpy protocol
+  - Python: debugpy 프로토콜
   - JavaScript: Chrome DevTools Protocol
 
-## Getting Started
+## 시작하기
 
-### Prerequisites
+### 사전 요구사항
 
-- JetBrains IDE (IntelliJ IDEA 2023.1+, PyCharm, WebStorm, etc.)
+- JetBrains IDE (IntelliJ IDEA 2023.1+, PyCharm, WebStorm 등)
 - JDK 17+
 - Gradle 8.0+
 
-### Installation
+### 설치
 
-Coming soon...
+준비 중...
 
-### Usage
+### 사용법
 
-Coming soon...
+준비 중...
 
-## Development Roadmap
+## 개발 로드맵
 
-- [ ] Phase 1: Core plugin infrastructure
-  - [ ] Plugin skeleton with IntelliJ Platform SDK
-  - [ ] Debugger API integration
-  - [ ] Basic expression evaluation
+- [ ] Phase 1: 핵심 플러그인 인프라
+  - [ ] IntelliJ Platform SDK를 사용한 플러그인 스켈레톤
+  - [ ] 디버거 API 통합
+  - [ ] 기본 표현식 평가
 
-- [ ] Phase 2: Visualization engine
-  - [ ] JCEF webview setup
-  - [ ] D3.js integration
-  - [ ] Basic graph/tree rendering
+- [ ] Phase 2: 시각화 엔진
+  - [ ] JCEF 웹뷰 설정
+  - [ ] D3.js 통합
+  - [ ] 기본 그래프/트리 렌더링
 
-- [ ] Phase 3: Language support
-  - [ ] Java/Kotlin data extraction
-  - [ ] Python data extraction
-  - [ ] JavaScript/TypeScript data extraction
+- [ ] Phase 3: 언어 지원
+  - [ ] Java/Kotlin 데이터 추출
+  - [ ] Python 데이터 추출
+  - [ ] JavaScript/TypeScript 데이터 추출
 
-- [ ] Phase 4: Algorithm-specific visualizers
-  - [ ] Array/sorting visualizations
-  - [ ] Tree visualizations
-  - [ ] Graph algorithm visualizations
-  - [ ] DP table visualizations
+- [ ] Phase 4: 알고리즘별 시각화
+  - [ ] 배열/정렬 시각화
+  - [ ] 트리 시각화
+  - [ ] 그래프 알고리즘 시각화
+  - [ ] DP 테이블 시각화
 
-- [ ] Phase 5: Advanced features
-  - [ ] Custom visualization API
-  - [ ] Animation controls
-  - [ ] Export capabilities
-  - [ ] Theme support
+- [ ] Phase 5: 고급 기능
+  - [ ] 커스텀 시각화 API
+  - [ ] 애니메이션 컨트롤
+  - [ ] 내보내기 기능
+  - [ ] 테마 지원
 
-## Contributing
+## 기여하기
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
+기여를 환영합니다! 자세한 내용은 [기여 가이드](CONTRIBUTING.md)를 참조해주세요.
 
-## License
+## 라이선스
 
 TBD
 
-## Acknowledgments
+## 감사의 말
 
-- Inspired by [VSCode Debug Visualizer](https://github.com/hediet/vscode-debug-visualizer)
-- Built with [IntelliJ Platform SDK](https://plugins.jetbrains.com/docs/intellij/)
+- [VSCode Debug Visualizer](https://github.com/hediet/vscode-debug-visualizer)에서 영감을 받았습니다
+- [IntelliJ Platform SDK](https://plugins.jetbrains.com/docs/intellij/)로 제작되었습니다
