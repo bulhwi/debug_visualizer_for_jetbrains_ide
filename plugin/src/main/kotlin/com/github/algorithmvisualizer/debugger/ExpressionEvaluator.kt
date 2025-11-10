@@ -57,18 +57,18 @@ class ExpressionEvaluator {
                 return future
             }
 
-            logger.info("Evaluating expression: $expression")
+            logger.warn("=== EVALUATING EXPRESSION: $expression ===")
 
             evaluator.evaluate(
                 expression,
                 object : XDebuggerEvaluator.XEvaluationCallback {
                     override fun evaluated(result: XValue) {
-                        logger.info("Expression evaluated successfully: $expression")
+                        logger.warn("=== EVALUATED SUCCESS: $expression, XValue class: ${result.javaClass.name} ===")
                         future.complete(EvaluationResult(true, value = result))
                     }
 
                     override fun errorOccurred(errorMessage: String) {
-                        logger.warn("Evaluation error for '$expression': $errorMessage")
+                        logger.warn("=== EVALUATION ERROR for '$expression': $errorMessage ===")
                         future.complete(EvaluationResult(false, error = errorMessage))
                     }
                 },
@@ -100,7 +100,7 @@ class ExpressionEvaluator {
         val future = CompletableFuture<String>()
 
         try {
-            logger.info("Extracting value from XValue type: ${xValue.javaClass.name}")
+            logger.warn("=== EXTRACTING value from XValue type: ${xValue.javaClass.name} ===")
 
             // Java 디버거의 경우 JavaValue에서 직접 값 추출 시도
             if (xValue is JavaValue) {
@@ -196,13 +196,17 @@ class ExpressionEvaluator {
         session: XDebugSession,
         expression: String
     ): CompletableFuture<Pair<String?, String?>> {
+        logger.warn("=== START evaluateAndExtract for: $expression ===")
         return evaluateExpression(session, expression).thenCompose { result ->
+            logger.warn("=== evaluateExpression result: success=${result.success}, hasValue=${result.value != null} ===")
             if (result.success && result.value != null) {
                 // XValue에서 실제 값 추출
                 extractValueString(result.value).thenApply { valueStr ->
+                    logger.warn("=== FINAL extracted value: $valueStr ===")
                     Pair(valueStr, null)
                 }
             } else {
+                logger.warn("=== FINAL error: ${result.error} ===")
                 CompletableFuture.completedFuture(Pair(result.error, null))
             }
         }
