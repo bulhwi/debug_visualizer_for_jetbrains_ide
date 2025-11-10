@@ -42,6 +42,10 @@ tasks {
         kotlinOptions.jvmTarget = "17"
     }
 
+    runIde {
+        jvmArgs = listOf("-Xmx2048m", "-Xms512m")
+    }
+
     patchPluginXml {
         sinceBuild.set("232")
         untilBuild.set("241.*")

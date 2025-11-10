@@ -1,10 +1,13 @@
 package com.github.algorithmvisualizer.toolwindow
 
+import com.github.algorithmvisualizer.debugger.DebuggerIntegration
+import com.github.algorithmvisualizer.debugger.DebuggerStateListener
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.JBUI
+import com.intellij.xdebugger.XDebugSession
 import java.awt.BorderLayout
 import java.awt.FlowLayout
 import javax.swing.*
@@ -20,9 +23,13 @@ class VisualizerToolWindowPanel(private val project: Project) : JPanel(BorderLay
     private val evaluateButton: JButton
     private val visualizationArea: JPanel
     private val statusLabel: JBLabel
+    private val debuggerIntegration: DebuggerIntegration = DebuggerIntegration.getInstance(project)
 
     init {
         border = JBUI.Borders.empty(8)
+
+        // 디버거 상태 리스너 등록
+        setupDebuggerListener()
 
         // 상단 패널: 표현식 입력 영역
         val topPanel = createTopPanel()
@@ -103,6 +110,43 @@ class VisualizerToolWindowPanel(private val project: Project) : JPanel(BorderLay
     }
 
     /**
+     * 디버거 상태 리스너 설정
+     */
+    private fun setupDebuggerListener() {
+        debuggerIntegration.addListener(object : DebuggerStateListener {
+            override fun onSessionStarted(session: XDebugSession) {
+                updateStatus("디버깅 세션 시작됨: ${session.sessionName}")
+                evaluateButton.isEnabled = true
+            }
+
+            override fun onSessionStopped(session: XDebugSession) {
+                updateStatus("디버깅 세션 종료됨")
+                evaluateButton.isEnabled = false
+            }
+
+            override fun onSessionChanged(previous: XDebugSession?, current: XDebugSession?) {
+                if (current != null) {
+                    updateStatus("디버깅 세션 활성화: ${current.sessionName}")
+                    evaluateButton.isEnabled = true
+                } else {
+                    updateStatus("디버깅 세션 없음")
+                    evaluateButton.isEnabled = false
+                }
+            }
+        })
+
+        // 초기 상태 확인
+        if (debuggerIntegration.isDebugging()) {
+            val session = debuggerIntegration.getCurrentSession()
+            updateStatus("디버깅 중: ${session?.sessionName}")
+            evaluateButton.isEnabled = true
+        } else {
+            updateStatus("디버깅 세션을 시작하세요")
+            evaluateButton.isEnabled = false
+        }
+    }
+
+    /**
      * 표현식 평가 실행
      */
     private fun evaluateExpression() {
@@ -110,6 +154,23 @@ class VisualizerToolWindowPanel(private val project: Project) : JPanel(BorderLay
 
         if (expression.isEmpty()) {
             updateStatus("표현식을 입력해주세요", isError = true)
+            return
+        }
+
+        // 디버거 상태 확인
+        if (!debuggerIntegration.isDebugging()) {
+            updateStatus("디버깅 세션이 활성화되지 않았습니다", isError = true)
+            return
+        }
+
+        if (!debuggerIntegration.isSuspended()) {
+            updateStatus("브레이크포인트에서 실행이 멈춰있지 않습니다", isError = true)
+            return
+        }
+
+        val stackFrame = debuggerIntegration.getCurrentStackFrame()
+        if (stackFrame == null) {
+            updateStatus("현재 스택 프레임을 가져올 수 없습니다", isError = true)
             return
         }
 
