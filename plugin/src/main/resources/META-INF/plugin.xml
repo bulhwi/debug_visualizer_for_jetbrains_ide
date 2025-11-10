@@ -1,0 +1,35 @@
+<idea-plugin>
+    <id>com.github.algorithmvisualizer.debug-visualizer</id>
+    <name>Algorithm Debug Visualizer</name>
+    <vendor email="support@example.com" url="https://github.com/bulhwi/debug_visualizer_for_jetbrains_ide">
+        Algorithm Visualizer Team
+    </vendor>
+
+    <!-- 플러그인 설명 (build.gradle.kts에서 패치됨) -->
+    <description><![CDATA[
+        JetBrains IDE를 위한 강력한 알고리즘 디버깅 시각화 도구입니다.
+    ]]></description>
+
+    <!-- 지원하는 IDE 버전 -->
+    <idea-version since-build="232" until-build="241.*"/>
+
+    <!-- 의존성 -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
+    <depends>org.jetbrains.kotlin</depends>
+
+    <!-- 확장 포인트 -->
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- 여기에 향후 확장 포인트들이 추가됩니다 -->
+    </extensions>
+
+    <!-- 액션 -->
+    <actions>
+        <!-- 여기에 향후 액션들이 추가됩니다 -->
+    </actions>
+
+    <!-- 애플리케이션 컴포넌트 -->
+    <applicationListeners>
+        <!-- 여기에 향후 리스너들이 추가됩니다 -->
+    </applicationListeners>
+</idea-plugin>

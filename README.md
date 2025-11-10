@@ -131,11 +131,62 @@ algorithm-debug-visualizer/
 
 ### 설치
 
-준비 중...
+1. **JetBrains Marketplace에서 설치** (향후 제공 예정)
+   - IDE의 Settings/Preferences → Plugins
+   - "Algorithm Debug Visualizer" 검색 및 설치
+
+2. **소스에서 빌드하여 설치**
+   ```bash
+   # 저장소 클론
+   git clone https://github.com/bulhwi/debug_visualizer_for_jetbrains_ide.git
+   cd debug_visualizer_for_jetbrains_ide/plugin
+
+   # 빌드
+   ./gradlew buildPlugin
+
+   # 빌드된 플러그인은 plugin/build/distributions/에 생성됩니다
+   # IDE의 Settings/Preferences → Plugins → ⚙️ → Install Plugin from Disk...
+   # 에서 생성된 .zip 파일을 선택하여 설치
+   ```
+
+### 개발 환경 설정
+
+```bash
+# 프로젝트 클론
+git clone https://github.com/bulhwi/debug_visualizer_for_jetbrains_ide.git
+cd debug_visualizer_for_jetbrains_ide/plugin
+
+# 의존성 다운로드 및 프로젝트 빌드
+./gradlew build
+
+# 테스트 실행
+./gradlew test
+
+# 테스트 IDE 인스턴스 실행 (플러그인이 설치된 상태로)
+./gradlew runIde
+
+# 플러그인 배포 파일 생성
+./gradlew buildPlugin
+```
 
 ### 사용법
 
-준비 중...
+1. **디버깅 세션 시작**
+   - 코드에 중단점 설정
+   - 디버그 모드로 프로그램 실행
+
+2. **시각화 도구 윈도우 열기**
+   - View → Tool Windows → Algorithm Visualizer
+
+3. **변수 시각화**
+   - 표현식 입력 필드에 변수명 입력 (예: `myArray`, `myTree`)
+   - Enter 키 또는 "Evaluate" 버튼 클릭
+   - 시각화가 자동으로 표시됩니다
+
+4. **스테핑**
+   - Step Over / Step Into 실행 시 시각화가 자동 업데이트됩니다
+
+**현재 상태**: Phase 1 개발 중 - 기본 인프라 구축 단계
 
 ## 개발 로드맵
 
