@@ -34,43 +34,11 @@ class VisualizerToolWindowPanel(private val project: Project) : JPanel(BorderLay
     init {
         border = JBUI.Borders.empty(8)
 
-        // 디버거 상태 리스너 등록
-        setupDebuggerListener()
-
         // 상단 패널: 표현식 입력 영역
         val topPanel = createTopPanel()
         add(topPanel, BorderLayout.NORTH)
 
-        // 중앙 패널: 시각화 영역
-        visualizationArea = JPanel(BorderLayout())
-        visualizationArea.border = JBUI.Borders.empty(8)
-
-        // JCEF 지원 여부에 따라 다른 UI 표시
-        if (useJCEF) {
-            try {
-                jcefPanel = JCEFVisualizationPanel()
-                visualizationArea.add(jcefPanel!!, BorderLayout.CENTER)
-
-                // 초기 상태 메시지 (디버깅용)
-                updateStatus("JCEF 웹뷰 로드됨 - 디버깅 세션을 시작하세요")
-            } catch (e: Exception) {
-                updateStatus("JCEF 초기화 실패: ${e.message}", isError = true)
-                showFallbackWelcome()
-            }
-        } else {
-            updateStatus("JCEF가 지원되지 않습니다", isError = true)
-            showFallbackWelcome()
-        }
-
-        val scrollPane = JBScrollPane(visualizationArea)
-        add(scrollPane, BorderLayout.CENTER)
-
-        // 하단 패널: 상태 표시
-        statusLabel = JBLabel("준비됨")
-        statusLabel.border = JBUI.Borders.empty(4, 8)
-        add(statusLabel, BorderLayout.SOUTH)
-
-        // 필드 초기화
+        // 필드 초기화 (디버거 리스너 등록 전에 수행)
         expressionField = topPanel.components
             .filterIsInstance<JPanel>()
             .firstOrNull()
@@ -84,6 +52,40 @@ class VisualizerToolWindowPanel(private val project: Project) : JPanel(BorderLay
             ?.components
             ?.filterIsInstance<JButton>()
             ?.firstOrNull() ?: JButton()
+
+        // 중앙 패널: 시각화 영역
+        visualizationArea = JPanel(BorderLayout())
+        visualizationArea.border = JBUI.Borders.empty(8)
+
+        // JCEF 지원 여부에 따라 다른 UI 표시
+        if (useJCEF) {
+            try {
+                jcefPanel = JCEFVisualizationPanel()
+                visualizationArea.add(jcefPanel!!, BorderLayout.CENTER)
+            } catch (e: Exception) {
+                showFallbackWelcome()
+            }
+        } else {
+            showFallbackWelcome()
+        }
+
+        val scrollPane = JBScrollPane(visualizationArea)
+        add(scrollPane, BorderLayout.CENTER)
+
+        // 하단 패널: 상태 표시
+        statusLabel = JBLabel("준비됨")
+        statusLabel.border = JBUI.Borders.empty(4, 8)
+        add(statusLabel, BorderLayout.SOUTH)
+
+        // 모든 UI 컴포넌트가 초기화된 후 디버거 리스너 등록
+        setupDebuggerListener()
+
+        // JCEF 초기 상태 메시지
+        if (useJCEF && jcefPanel != null) {
+            updateStatus("JCEF 웹뷰 로드됨 - 디버깅 세션을 시작하세요")
+        } else if (!useJCEF) {
+            updateStatus("JCEF가 지원되지 않습니다", isError = true)
+        }
     }
 
     /**
