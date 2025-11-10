@@ -186,36 +186,53 @@ cd debug_visualizer_for_jetbrains_ide/plugin
 4. **스테핑**
    - Step Over / Step Into 실행 시 시각화가 자동 업데이트됩니다
 
-**현재 상태**: Phase 1 개발 중 - 기본 인프라 구축 단계
+**현재 상태**: ✅ Phase 1 완료 → Phase 2 진행 예정
 
-## 개발 로드맵
+## 프로젝트 상태
 
-- [ ] Phase 1: 핵심 플러그인 인프라
-  - [ ] IntelliJ Platform SDK를 사용한 플러그인 스켈레톤
-  - [ ] 디버거 API 통합
-  - [ ] 기본 표현식 평가
+### ✅ Phase 1: 기본 프로토타입 (완료 - 2025-11-11)
+- ✅ IntelliJ Platform Plugin 초기화
+- ✅ 디버거 API 통합 (XDebuggerManager)
+- ✅ JDI 기반 표현식 평가 (모든 프리미티브 타입 지원)
+- ✅ JCEF 웹뷰 통합
+- ✅ React UI + D3.js 기본 시각화 (배열 막대 그래프)
+- ✅ 데이터 브리지 (Kotlin ↔ React)
+- ✅ TDD 환경 구축 (45개 테스트, 100% 통과)
 
-- [ ] Phase 2: 시각화 엔진
-  - [ ] JCEF 웹뷰 설정
-  - [ ] D3.js 통합
-  - [ ] 기본 그래프/트리 렌더링
+**기술 스택**:
+- Kotlin 1.9.21 + IntelliJ Platform 2023.2.5
+- React 18.2 + TypeScript 5.2 + Vite 5.0
+- D3.js 7.8.5
+- JUnit 5 + MockK + Vitest + React Testing Library
 
-- [ ] Phase 3: 언어 지원
-  - [ ] Java/Kotlin 데이터 추출
-  - [ ] Python 데이터 추출
-  - [ ] JavaScript/TypeScript 데이터 추출
+### 🚀 Phase 2: 알고리즘별 맞춤 시각화 (진행 예정 - 2-3주)
+- [ ] **정렬 알고리즘 시각화** (버블, 퀵, 병합 정렬)
+  - [ ] SortVisualizer 컴포넌트 (TDD)
+  - [ ] 알고리즘 자동 감지
+  - [ ] 스냅샷 수집 및 애니메이션
+- [ ] **트리 구조 시각화** (이진 트리, BST, AVL)
+  - [ ] TreeVisualizer 컴포넌트 (TDD)
+  - [ ] TreeNode 파서 (JDI 기반)
+  - [ ] 삽입/삭제/탐색 애니메이션
+- [ ] **DP 테이블 시각화**
+  - [ ] DPTableVisualizer 컴포넌트 (TDD)
+  - [ ] 2D 히트맵
+  - [ ] 최적 경로 추적
+- [ ] **그래프 시각화** (보너스)
 
-- [ ] Phase 4: 알고리즘별 시각화
-  - [ ] 배열/정렬 시각화
-  - [ ] 트리 시각화
-  - [ ] 그래프 알고리즘 시각화
-  - [ ] DP 테이블 시각화
+### 📋 Phase 3: 실시간 스텝 추적 (예정)
+- [ ] 디버거 스텝 이벤트 자동 감지
+- [ ] 실시간 UI 업데이트
+- [ ] 타임라인 재생 (TimeMachine)
+- [ ] 코드-시각화 양방향 점프
+- [ ] 애니메이션 엔진
+- [ ] 비교 모드
 
-- [ ] Phase 5: 고급 기능
-  - [ ] 커스텀 시각화 API
-  - [ ] 애니메이션 컨트롤
-  - [ ] 내보내기 기능
-  - [ ] 테마 지원
+**참고 문서**:
+- [Phase 1 완료 보고서](./docs/PHASE1_COMPLETE.md)
+- [Phase 2 상세 계획](./docs/PHASE2_PLAN.md)
+- [Phase 3 상세 계획](./docs/PHASE3_PLAN.md)
+- [다음 작업 가이드](./NEXT_STEPS.md)
 
 ## 기여하기
 
