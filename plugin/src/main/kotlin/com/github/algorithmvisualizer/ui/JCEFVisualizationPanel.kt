@@ -79,44 +79,45 @@ class JCEFVisualizationPanel : JPanel(BorderLayout()) {
                     }
                     body {
                         margin: 0;
-                        padding: 20px;
+                        padding: 0;
                         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
                         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                         color: #333333;
-                        min-height: 100vh;
+                        min-height: 100%;
+                        overflow-x: hidden;
                     }
                     .container {
-                        max-width: 1200px;
-                        margin: 0 auto;
                         background-color: white;
-                        border-radius: 12px;
-                        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-                        overflow: hidden;
+                        height: 100%;
+                        display: flex;
+                        flex-direction: column;
                     }
                     .welcome {
                         text-align: center;
-                        padding: 60px 40px;
+                        padding: 40px 30px;
                         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                         color: white;
+                        flex-shrink: 0;
                     }
                     .welcome h1 {
-                        margin: 0 0 16px 0;
-                        font-size: 2.5em;
+                        margin: 0 0 12px 0;
+                        font-size: 2em;
                         font-weight: 700;
                     }
                     .welcome p {
-                        margin: 8px 0;
-                        font-size: 16px;
-                        line-height: 1.6;
+                        margin: 6px 0;
+                        font-size: 14px;
+                        line-height: 1.5;
                         opacity: 0.95;
                     }
                     .emoji {
-                        font-size: 3em;
-                        margin-bottom: 16px;
+                        font-size: 2.5em;
+                        margin-bottom: 12px;
                     }
                     #visualization {
-                        min-height: 300px;
-                        padding: 30px;
+                        flex: 1;
+                        padding: 20px;
+                        overflow-y: auto;
                     }
                     .status {
                         padding: 16px 20px;

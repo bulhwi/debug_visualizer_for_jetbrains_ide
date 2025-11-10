@@ -55,22 +55,25 @@ class VisualizerToolWindowPanel(private val project: Project) : JPanel(BorderLay
 
         // 중앙 패널: 시각화 영역
         visualizationArea = JPanel(BorderLayout())
-        visualizationArea.border = JBUI.Borders.empty(8)
+        visualizationArea.border = JBUI.Borders.empty(0)
 
         // JCEF 지원 여부에 따라 다른 UI 표시
         if (useJCEF) {
             try {
                 jcefPanel = JCEFVisualizationPanel()
                 visualizationArea.add(jcefPanel!!, BorderLayout.CENTER)
+                // JCEF는 자체 스크롤을 가지므로 스크롤 팬 없이 직접 추가
+                add(visualizationArea, BorderLayout.CENTER)
             } catch (e: Exception) {
                 showFallbackWelcome()
+                val scrollPane = JBScrollPane(visualizationArea)
+                add(scrollPane, BorderLayout.CENTER)
             }
         } else {
             showFallbackWelcome()
+            val scrollPane = JBScrollPane(visualizationArea)
+            add(scrollPane, BorderLayout.CENTER)
         }
-
-        val scrollPane = JBScrollPane(visualizationArea)
-        add(scrollPane, BorderLayout.CENTER)
 
         // 하단 패널: 상태 표시
         statusLabel = JBLabel("준비됨")
