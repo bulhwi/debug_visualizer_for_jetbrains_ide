@@ -18,10 +18,11 @@
 ## 기술 스택
 
 ### 플러그인 개발
-- **언어**: Kotlin
-- **프레임워크**: IntelliJ Platform SDK 2023.1+
-- **빌드 도구**: Gradle 8.0+
-- **JDK**: 17+
+- **언어**: Kotlin 1.9.21
+- **프레임워크**: IntelliJ Platform SDK 2023.2.5
+- **빌드 도구**: Gradle 8.5
+- **JDK**: 17
+- **테스트**: JUnit 5, MockK, AssertJ
 
 ### 시각화 UI
 - **언어**: TypeScript
@@ -63,11 +64,14 @@ algorithm-debug-visualizer/
 
 ## 개발 로드맵
 
-### Phase 1: 핵심 인프라 (4주)
-- IntelliJ Platform SDK 기반 플러그인 스켈레톤
-- 디버거 API 통합
-- 기본 표현식 평가 시스템
-- JCEF 웹뷰 설정
+### Phase 1: 핵심 인프라 (4주) - ✅ 진행 중 (80% 완료)
+- ✅ IntelliJ Platform SDK 기반 플러그인 스켈레톤
+- ✅ 디버거 API 통합
+- ✅ 표현식 평가 시스템 (JDI 기반)
+- ✅ JCEF 웹뷰 설정
+- ✅ TDD 환경 구축 (35개 테스트)
+- 🔄 React UI 초기화
+- 🔄 D3.js 기본 렌더러
 
 ### Phase 2: 시각화 엔진 (4주)
 - React + TypeScript UI 구축
@@ -147,3 +151,20 @@ TBD (MIT 또는 Apache 2.0 고려 중)
 3. **확장성**: 커스텀 시각화 쉽게 추가 가능
 4. **안정성**: 철저한 테스트, 버그 최소화
 5. **문서화**: 명확한 문서와 예제 제공
+6. **TDD**: 테스트 주도 개발로 빠른 피드백 루프 유지
+
+## 현재 진행 상황 (2025-11-10)
+
+### ✅ 완료된 마일스톤
+- Phase 1-1 ~ 1-5: 플러그인 코어 구현 완료
+- JDI 기반 값 추출: 모든 프리미티브 타입, 배열, 문자열 지원
+- TDD 환경: 35개 테스트, < 1초 실행, 100% 성공률
+- 문서화: LESSONS_LEARNED.md, TESTING.md 작성
+
+### 🔄 진행 중
+- Phase 1-6 ~ 1-9: React UI 및 데이터 추출기 확장
+
+### 📚 참고 문서
+- `docs/LESSONS_LEARNED.md`: IntelliJ XDebugger API 제약사항 및 해결 방법
+- `docs/TESTING.md`: TDD 워크플로우 및 테스트 작성 가이드
+- `CLAUDE.md`: 프로젝트 개요 및 최신 상태

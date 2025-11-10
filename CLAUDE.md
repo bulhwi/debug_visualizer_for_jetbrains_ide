@@ -8,12 +8,31 @@
 
 ## 프로젝트 상태
 
-현재 프로젝트는 **기획 및 설계 단계**에 있습니다.
+현재 프로젝트는 **Phase 1 구현 단계**에 있습니다.
 
-- ✅ 프로젝트 문서화 완료 (한국어)
-- ✅ 아키텍처 설계 완료
-- ✅ 시각화 데이터 스키마 정의
-- 🔄 다음: 플러그인 프로토타입 구현
+### 완료된 작업
+- ✅ Phase 1-1: 프로젝트 초기화
+- ✅ Phase 1-2: 툴 윈도우 UI 구현
+- ✅ Phase 1-3: 디버거 API 통합
+- ✅ Phase 1-4: 표현식 평가 시스템
+- ✅ Phase 1-5: JCEF 웹뷰 통합
+- ✅ JDI 기반 값 추출 (프리미티브, 배열, 문자열)
+- ✅ TDD 환경 구축 (35개 테스트, 100% 성공)
+
+### 진행 중
+- 🔄 Phase 1-6: React 프로젝트 초기화
+- 🔄 Phase 1-7: D3.js 통합 및 기본 렌더러
+- 🔄 Phase 1-8: JSON 데이터 브리지
+- 🔄 Phase 1-9: Java/Kotlin 데이터 추출기 확장
+
+### 핵심 성과
+1. **JDI 기반 값 추출**: IntelliJ XDebugger API의 제한을 극복하고 JDI를 직접 사용
+   - ✅ 모든 프리미티브 타입 (int, long, float, double, boolean, char, byte, short)
+   - ✅ 문자열 및 배열 (중첩 배열 포함)
+   - ✅ null 값 처리
+2. **JCEF 통합**: 웹 기반 시각화를 위한 브라우저 컴포넌트 통합 완료
+3. **비동기 평가**: CompletableFuture를 사용한 안전한 비동기 표현식 평가
+4. **TDD 환경**: 빠른 피드백 루프 (< 1초, 35개 테스트)
 
 ## 디렉토리 구조
 
@@ -24,8 +43,16 @@
 ├── docs/                 # 프로젝트 문서
 │   ├── architecture.md   # 시스템 아키텍처
 │   ├── visualization-schema.md  # 데이터 스키마
-│   └── PRD.md           # 제품 요구사항 정의서
-├── plugin/              # (예정) IntelliJ 플러그인 코드
+│   ├── PRD.md           # 제품 요구사항 정의서
+│   ├── LESSONS_LEARNED.md  # 교훈 및 이슈 정리
+│   └── TESTING.md       # 테스트 가이드
+├── plugin/              # ✅ IntelliJ 플러그인 코드
+│   ├── src/main/kotlin/ # 플러그인 소스
+│   │   ├── debugger/    # 디버거 통합 및 표현식 평가
+│   │   ├── toolwindow/  # 툴 윈도우 UI
+│   │   └── ui/          # JCEF 시각화 패널
+│   ├── src/test/kotlin/ # 테스트 코드 (35개)
+│   └── build.gradle.kts # Gradle 빌드 설정
 ├── visualizer-ui/       # (예정) React 시각화 UI
 ├── data-extraction/     # (예정) 언어별 데이터 추출기
 ├── README.md            # 프로젝트 README
@@ -36,10 +63,11 @@
 ## 핵심 기술
 
 ### 플러그인 개발
-- **언어**: Kotlin
-- **SDK**: IntelliJ Platform SDK 2023.1+
-- **빌드**: Gradle 8.0+
-- **JDK**: 17+
+- **언어**: Kotlin 1.9.21
+- **SDK**: IntelliJ Platform SDK 2023.2.5
+- **빌드**: Gradle 8.5
+- **JDK**: 17
+- **테스트**: JUnit 5 + MockK + AssertJ
 
 ### 시각화 UI
 - **프레임워크**: React + TypeScript
@@ -180,14 +208,25 @@ main                # 안정 버전
 
 ## 테스트 전략
 
-### 단위 테스트
+### 단위 테스트 (✅ 구축 완료)
 ```bash
 cd plugin
-./gradlew test
+./gradlew test  # 35개 테스트, < 1초 실행
 
-cd visualizer-ui
-npm test
+# 연속 테스트 (TDD 모드)
+./gradlew test --continuous
+
+# 특정 테스트만 실행
+./gradlew test --tests "*ExpressionEvaluator*"
 ```
+
+**현재 커버리지:**
+- `ExpressionEvaluatorTest`: 13개 테스트
+- `JdiValueConverterTest`: 16개 테스트
+- `VisualizerToolWindowPanelTest`: 8개 테스트
+- 성공률: 100% (35/35)
+
+**참고:** [docs/TESTING.md](docs/TESTING.md) 전체 테스트 가이드 참조
 
 ### 통합 테스트
 ```bash
@@ -195,7 +234,7 @@ cd plugin
 ./gradlew runIde  # 테스트 IDE 인스턴스 실행
 ```
 
-### E2E 테스트
+### E2E 테스트 (예정)
 - 샘플 프로젝트로 실제 디버깅 시나리오 테스트
 - 각 알고리즘 타입별 테스트 케이스
 
@@ -303,5 +342,22 @@ cd visualizer-ui && npm run build
 
 ---
 
-**마지막 업데이트**: 2024-11-10
-**문서 버전**: 1.0.0
+## 최근 업데이트 (2025-11-10)
+
+### ✅ 완료된 주요 작업
+1. **int 타입 추출 문제 해결**: JDI를 사용하여 모든 프리미티브 타입 추출 성공
+2. **TDD 환경 구축**: 35개 단위 테스트, 100% 성공률, < 1초 실행
+3. **코드 리팩토링**: ExpressionEvaluator 상수 추출, 헬퍼 메서드 분리
+4. **문서 작성**:
+   - `docs/LESSONS_LEARNED.md`: 디버깅 과정에서 얻은 교훈
+   - `docs/TESTING.md`: TDD 워크플로우 및 테스트 가이드
+
+### 🔑 핵심 교훈
+- IntelliJ XDebugger API는 추상화 레이어이며, 복잡한 값 추출에는 JDI 직접 사용 필요
+- JDI 클래스는 final class라서 mocking 불가 → 로직 분리 필요
+- DebuggerCommandImpl을 통해 디버거 스레드에서 안전하게 JDI 접근
+
+---
+
+**마지막 업데이트**: 2025-11-10
+**문서 버전**: 1.1.0

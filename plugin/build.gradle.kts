@@ -18,6 +18,8 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testImplementation("io.mockk:mockk:1.13.8")
+    testImplementation("org.assertj:assertj-core:3.24.2")
 }
 
 // IntelliJ Platform 설정
@@ -97,5 +99,32 @@ tasks {
 
     test {
         useJUnitPlatform()
+
+        // 테스트 결과 리포트 설정
+        testLogging {
+            events("passed", "skipped", "failed")
+            showStandardStreams = false
+            showExceptions = true
+            showCauses = true
+            showStackTraces = true
+
+            // 각 테스트 실행 후 결과 출력
+            afterSuite(KotlinClosure2({ desc: TestDescriptor, result: TestResult ->
+                if (desc.parent == null) {
+                    println("\n테스트 결과: ${result.resultType}")
+                    println("테스트 실행: ${result.testCount}개")
+                    println("성공: ${result.successfulTestCount}개")
+                    println("실패: ${result.failedTestCount}개")
+                    println("건너뜀: ${result.skippedTestCount}개")
+                    println("소요 시간: ${result.endTime - result.startTime}ms\n")
+                }
+            }))
+        }
+
+        // 테스트 실패 시 계속 실행
+        ignoreFailures = false
+
+        // 최대 병렬 실행
+        maxParallelForks = Runtime.getRuntime().availableProcessors().div(2).coerceAtLeast(1)
     }
 }
