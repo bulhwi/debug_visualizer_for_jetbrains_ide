@@ -20,7 +20,12 @@
 
     <!-- 확장 포인트 -->
     <extensions defaultExtensionNs="com.intellij">
-        <!-- 여기에 향후 확장 포인트들이 추가됩니다 -->
+        <!-- 도구 윈도우 -->
+        <toolWindow
+            id="AlgorithmVisualizer"
+            anchor="bottom"
+            factoryClass="com.github.algorithmvisualizer.toolwindow.VisualizerToolWindowFactory"
+            icon="AllIcons.Toolwindows.ToolWindowDebugger"/>
     </extensions>
 
     <!-- 액션 -->
