@@ -71,94 +71,153 @@ class JCEFVisualizationPanel : JPanel(BorderLayout()) {
             <html>
             <head>
                 <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Algorithm Visualizer</title>
                 <style>
+                    * {
+                        box-sizing: border-box;
+                    }
                     body {
                         margin: 0;
                         padding: 20px;
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                        background-color: #ffffff;
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                         color: #333333;
+                        min-height: 100vh;
                     }
                     .container {
                         max-width: 1200px;
                         margin: 0 auto;
+                        background-color: white;
+                        border-radius: 12px;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+                        overflow: hidden;
                     }
                     .welcome {
                         text-align: center;
-                        padding: 60px 20px;
+                        padding: 60px 40px;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
                     }
                     .welcome h1 {
-                        color: #2196F3;
-                        margin-bottom: 16px;
+                        margin: 0 0 16px 0;
+                        font-size: 2.5em;
+                        font-weight: 700;
                     }
                     .welcome p {
-                        color: #666;
+                        margin: 8px 0;
                         font-size: 16px;
                         line-height: 1.6;
+                        opacity: 0.95;
+                    }
+                    .emoji {
+                        font-size: 3em;
+                        margin-bottom: 16px;
                     }
                     #visualization {
-                        min-height: 400px;
-                        border: 1px solid #e0e0e0;
-                        border-radius: 8px;
-                        padding: 20px;
-                        margin-top: 20px;
+                        min-height: 300px;
+                        padding: 30px;
                     }
                     .status {
-                        padding: 12px;
+                        padding: 16px 20px;
                         margin: 10px 0;
-                        border-radius: 4px;
+                        border-radius: 8px;
                         background-color: #f5f5f5;
+                        border-left: 4px solid #2196F3;
                     }
                     .status.success {
                         background-color: #e8f5e9;
+                        border-left-color: #4caf50;
                         color: #2e7d32;
                     }
                     .status.error {
                         background-color: #ffebee;
+                        border-left-color: #f44336;
                         color: #c62828;
+                    }
+                    .data-display {
+                        font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+                        background-color: #f8f9fa;
+                        padding: 20px;
+                        border-radius: 8px;
+                        margin-top: 10px;
+                        white-space: pre-wrap;
+                        word-break: break-all;
                     }
                 </style>
             </head>
             <body>
                 <div class="container">
                     <div class="welcome">
-                        <h1>🎨 Algorithm Visualizer</h1>
-                        <p>JCEF 웹뷰가 성공적으로 로드되었습니다.</p>
-                        <p>디버거에서 표현식을 평가하면 이 영역에 시각화가 표시됩니다.</p>
+                        <div class="emoji">🎨</div>
+                        <h1>Algorithm Debug Visualizer</h1>
+                        <p>JCEF 웹뷰가 성공적으로 로드되었습니다!</p>
+                        <p>디버거를 시작하고 표현식을 평가해보세요.</p>
                     </div>
-                    <div id="visualization"></div>
+                    <div id="visualization">
+                        <div style="text-align: center; color: #999; padding: 40px;">
+                            <p>표현식 평가 결과가 여기에 표시됩니다.</p>
+                        </div>
+                    </div>
                 </div>
 
                 <script>
+                    console.log('🎨 Algorithm Visualizer - Initializing...');
+
                     // Java에서 호출할 수 있는 함수들
                     window.visualizerAPI = {
                         showData: function(data) {
-                            console.log('Received data:', data);
+                            console.log('📊 Received data:', data);
                             const viz = document.getElementById('visualization');
-                            viz.innerHTML = '<div class="status success">데이터 수신: ' + JSON.stringify(data) + '</div>';
+
+                            let dataObj;
+                            try {
+                                dataObj = typeof data === 'string' ? JSON.parse(data) : data;
+                            } catch (e) {
+                                dataObj = { raw: data };
+                            }
+
+                            viz.innerHTML =
+                                '<div class="status success">' +
+                                '<strong>✓ 평가 완료</strong>' +
+                                '</div>' +
+                                '<div class="data-display">' +
+                                JSON.stringify(dataObj, null, 2) +
+                                '</div>';
                         },
 
                         showError: function(message) {
+                            console.error('❌ Error:', message);
                             const viz = document.getElementById('visualization');
-                            viz.innerHTML = '<div class="status error">오류: ' + message + '</div>';
+                            viz.innerHTML =
+                                '<div class="status error">' +
+                                '<strong>❌ 오류 발생</strong><br>' +
+                                message +
+                                '</div>';
                         },
 
                         clear: function() {
-                            document.getElementById('visualization').innerHTML = '';
+                            console.log('🗑️ Clearing visualization');
+                            const viz = document.getElementById('visualization');
+                            viz.innerHTML =
+                                '<div style="text-align: center; color: #999; padding: 40px;">' +
+                                '<p>표현식 평가 결과가 여기에 표시됩니다.</p>' +
+                                '</div>';
                         }
                     };
 
-                    // Java로 메시지 전송 함수 (주입될 예정)
+                    // Java로 메시지 전송 함수 (브리지 주입 후 사용 가능)
                     window.sendToJava = function(message) {
-                        console.log('Sending to Java:', message);
+                        console.log('📤 Sending to Java:', message);
                     };
 
-                    console.log('Visualizer API initialized');
+                    console.log('✅ Visualizer API initialized successfully');
                 </script>
             </body>
             </html>
         """.trimIndent()
 
+        logger.info("Loading initial HTML into JCEF browser")
         browser.loadHTML(html)
     }
 

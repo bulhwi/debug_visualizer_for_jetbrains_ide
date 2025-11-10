@@ -50,10 +50,15 @@ class VisualizerToolWindowPanel(private val project: Project) : JPanel(BorderLay
             try {
                 jcefPanel = JCEFVisualizationPanel()
                 visualizationArea.add(jcefPanel!!, BorderLayout.CENTER)
+
+                // 초기 상태 메시지 (디버깅용)
+                updateStatus("JCEF 웹뷰 로드됨 - 디버깅 세션을 시작하세요")
             } catch (e: Exception) {
+                updateStatus("JCEF 초기화 실패: ${e.message}", isError = true)
                 showFallbackWelcome()
             }
         } else {
+            updateStatus("JCEF가 지원되지 않습니다", isError = true)
             showFallbackWelcome()
         }
 
