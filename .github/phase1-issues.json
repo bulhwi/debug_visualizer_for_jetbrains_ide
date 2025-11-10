@@ -1,0 +1,57 @@
+[
+  {
+    "title": "[Phase 1] 플러그인 프로젝트 초기화 및 기본 구조 설정",
+    "body": "## 작업 설명\nIntelliJ Platform SDK를 사용하여 플러그인 프로젝트를 초기화하고 기본 구조를 설정합니다.\n\n## 체크리스트\n- [ ] Gradle 기반 플러그인 프로젝트 생성\n- [ ] plugin.xml 설정 (플러그인 메타데이터)\n- [ ] 기본 디렉토리 구조 생성 (src/main/kotlin, src/main/resources)\n- [ ] build.gradle.kts 설정 (IntelliJ Platform Gradle Plugin)\n- [ ] JDK 17+ 설정\n- [ ] 기본 플러그인 클래스 생성 (AlgorithmVisualizerPlugin)\n- [ ] README에 빌드 및 실행 방법 추가\n\n## 수용 기준\n- `./gradlew build`가 성공적으로 실행됨\n- `./gradlew runIde`로 테스트 IDE 인스턴스가 실행됨\n- 플러그인이 IDE의 플러그인 목록에 나타남\n\n## 예상 소요 시간\n2-3일\n\n## 참고 자료\n- [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)\n- [IntelliJ Platform SDK Docs](https://plugins.jetbrains.com/docs/intellij/)\n- docs/architecture.md",
+    "labels": ["phase-1", "infrastructure", "priority: high"]
+  },
+  {
+    "title": "[Phase 1] 도구 윈도우 (Tool Window) 구현",
+    "body": "## 작업 설명\n시각화를 표시할 도구 윈도우를 구현합니다.\n\n## 체크리스트\n- [ ] VisualizerToolWindowFactory 클래스 생성\n- [ ] plugin.xml에 도구 윈도우 등록\n- [ ] 기본 UI 패널 생성 (Swing/JavaFX)\n- [ ] 도구 윈도우 위치 설정 (하단 또는 우측)\n- [ ] 도구 윈도우 아이콘 추가\n- [ ] 표현식 입력 필드 UI 구현\n- [ ] \"Evaluate\" 버튼 구현\n\n## 수용 기준\n- IDE 실행 시 \"Algorithm Visualizer\" 도구 윈도우가 보임\n- 도구 윈도우를 열고 닫을 수 있음\n- 도구 윈도우 크기 조절이 가능함\n- 표현식 입력 필드와 버튼이 UI에 표시됨\n\n## 예상 소요 시간\n2-3일\n\n## 참고 자료\n- [Tool Windows - IntelliJ Platform](https://plugins.jetbrains.com/docs/intellij/tool-windows.html)\n- docs/PRD.md - UI 섹션",
+    "labels": ["phase-1", "ui", "priority: high"]
+  },
+  {
+    "title": "[Phase 1] 디버거 API 통합",
+    "body": "## 작업 설명\nIntelliJ Platform의 디버거 API와 통합하여 디버깅 세션 중 변수에 접근할 수 있도록 합니다.\n\n## 체크리스트\n- [ ] DebuggerIntegration 클래스 구현\n- [ ] XDebuggerManager 연동\n- [ ] 현재 디버깅 세션 감지\n- [ ] 현재 스택 프레임 가져오기\n- [ ] 중단점 리스너 구현\n- [ ] 디버거 상태 변경 감지 (실행, 중단, 종료)\n- [ ] 에러 핸들링 (디버거 미실행 시)\n\n## 수용 기준\n- 디버깅 세션이 활성화되면 도구 윈도우가 활성화됨\n- 중단점에서 멈추면 현재 스택 프레임 정보를 가져올 수 있음\n- 디버거가 실행 중이 아닐 때 적절한 메시지 표시\n- 단위 테스트로 디버거 통합 검증\n\n## 예상 소요 시간\n3-4일\n\n## 참고 자료\n- [Debugger - IntelliJ Platform](https://plugins.jetbrains.com/docs/intellij/debugger.html)\n- docs/architecture.md - 디버거 통합 섹션",
+    "labels": ["phase-1", "core", "priority: high"]
+  },
+  {
+    "title": "[Phase 1] 표현식 평가 시스템 구현",
+    "body": "## 작업 설명\n사용자가 입력한 표현식을 디버거 컨텍스트에서 평가하여 값을 가져옵니다.\n\n## 체크리스트\n- [ ] ExpressionEvaluator 클래스 구현\n- [ ] XDebuggerEvaluator 사용하여 표현식 평가\n- [ ] XValue 객체 추출\n- [ ] 비동기 평가 처리 (Callback 또는 CompletableFuture)\n- [ ] 평가 오류 핸들링\n- [ ] 타임아웃 처리 (5초)\n- [ ] 표현식 검증 (기본 구문 체크)\n\n## 수용 기준\n- 간단한 표현식 평가 성공 (예: `myVariable`)\n- 필드 접근 평가 성공 (예: `myObject.field`)\n- 배열 인덱스 평가 성공 (예: `arr[0]`)\n- 메서드 호출 평가 성공 (예: `list.get(0)`)\n- 평가 실패 시 사용자 친화적 오류 메시지 표시\n- 단위 테스트로 다양한 표현식 검증\n\n## 예상 소요 시간\n3-4일\n\n## 참고 자료\n- [Debugger Evaluation - IntelliJ Platform](https://plugins.jetbrains.com/docs/intellij/debugger.html#expression-evaluation)\n- docs/architecture.md - 표현식 평가 섹션",
+    "labels": ["phase-1", "core", "priority: high"]
+  },
+  {
+    "title": "[Phase 1] JCEF 웹뷰 통합",
+    "body": "## 작업 설명\nJCEF (Java Chromium Embedded Framework)를 통합하여 웹 기반 시각화를 표시할 수 있도록 합니다.\n\n## 체크리스트\n- [ ] JCEF 의존성 추가 (build.gradle.kts)\n- [ ] JBCefBrowser 인스턴스 생성\n- [ ] 도구 윈도우에 웹뷰 컨테이너 추가\n- [ ] JavaScript Bridge 구현 (Kotlin ↔ JS 통신)\n- [ ] 기본 HTML 페이지 로드\n- [ ] 테스트용 간단한 시각화 표시\n- [ ] JCEF 미지원 환경 처리\n\n## 수용 기준\n- 도구 윈도우에 웹뷰가 표시됨\n- 기본 HTML 페이지가 로드됨\n- Kotlin에서 JavaScript로 메시지 전송 가능\n- JavaScript에서 Kotlin으로 메시지 전송 가능\n- Chrome DevTools를 통한 디버깅 가능\n\n## 예상 소요 시간\n3-4일\n\n## 참고 자료\n- [JCEF - IntelliJ Platform](https://plugins.jetbrains.com/docs/intellij/jcef.html)\n- docs/architecture.md - 시각화 엔진 섹션",
+    "labels": ["phase-1", "ui", "priority: high"]
+  },
+  {
+    "title": "[Phase 1] React 프로젝트 초기화",
+    "body": "## 작업 설명\n시각화 UI를 위한 React + TypeScript 프로젝트를 초기화합니다.\n\n## 체크리스트\n- [ ] visualizer-ui 디렉토리에 React 프로젝트 생성 (Vite)\n- [ ] TypeScript 설정\n- [ ] ESLint + Prettier 설정\n- [ ] package.json 의존성 설정\n- [ ] 기본 컴포넌트 구조 생성\n- [ ] 빌드 스크립트 설정\n- [ ] 개발 서버 설정\n\n## 수용 기준\n- `npm run dev`로 개발 서버 실행됨\n- `npm run build`로 프로덕션 빌드 성공\n- TypeScript 타입 체크 통과\n- ESLint 검사 통과\n- 기본 \"Hello World\" 컴포넌트 렌더링\n\n## 예상 소요 시간\n1-2일\n\n## 참고 자료\n- [Vite - Getting Started](https://vitejs.dev/guide/)\n- [React TypeScript Cheatsheet](https://react-typescript-cheatsheet.netlify.app/)\n- docs/architecture.md - 시각화 UI 섹션",
+    "labels": ["phase-1", "ui", "priority: medium"]
+  },
+  {
+    "title": "[Phase 1] D3.js 통합 및 기본 렌더러",
+    "body": "## 작업 설명\nD3.js를 통합하고 배열과 트리를 위한 기본 렌더러를 구현합니다.\n\n## 체크리스트\n- [ ] D3.js 의존성 추가\n- [ ] D3.js TypeScript 타입 정의 추가\n- [ ] Renderer 인터페이스 정의\n- [ ] ArrayRenderer 구현 (막대 그래프)\n- [ ] TreeRenderer 구현 (계층적 레이아웃)\n- [ ] VisualizerController 구현\n- [ ] 렌더러 등록 시스템\n- [ ] 반응형 SVG 설정 (리사이즈 처리)\n\n## 수용 기준\n- 샘플 배열 데이터가 막대 그래프로 렌더링됨\n- 샘플 트리 데이터가 계층 구조로 렌더링됨\n- 창 크기 변경 시 시각화가 자동 리사이즈됨\n- 줌/팬 인터랙션 기본 구현\n- 단위 테스트로 렌더러 검증\n\n## 예상 소요 시간\n4-5일\n\n## 참고 자료\n- [D3.js Documentation](https://d3js.org/)\n- [D3.js Gallery](https://observablehq.com/@d3/gallery)\n- docs/visualization-schema.md",
+    "labels": ["phase-1", "visualization", "priority: high"]
+  },
+  {
+    "title": "[Phase 1] JSON 데이터 브리지 구현",
+    "body": "## 작업 설명\nKotlin 플러그인과 React UI 간의 JSON 데이터 통신을 구현합니다.\n\n## 체크리스트\n- [ ] VisualizationData 데이터 클래스 정의 (Kotlin)\n- [ ] JSON 직렬화/역직렬화 (kotlinx.serialization)\n- [ ] JCEF Bridge를 통한 데이터 전송\n- [ ] TypeScript 타입 정의 (VisualizationData 인터페이스)\n- [ ] React에서 데이터 수신 처리\n- [ ] 스키마 검증 로직\n- [ ] 에러 핸들링\n\n## 수용 기준\n- Kotlin에서 생성한 시각화 데이터가 JSON으로 직렬화됨\n- React에서 JSON 데이터를 파싱하여 올바른 타입으로 변환\n- 스키마 검증이 정상 작동함\n- 잘못된 데이터 수신 시 적절한 에러 메시지\n- 단위 테스트로 직렬화/역직렬화 검증\n\n## 예상 소요 시간\n2-3일\n\n## 참고 자료\n- [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization)\n- docs/visualization-schema.md\n- docs/architecture.md - 데이터 흐름 섹션",
+    "labels": ["phase-1", "core", "priority: high"]
+  },
+  {
+    "title": "[Phase 1] Java/Kotlin 기본 데이터 추출기",
+    "body": "## 작업 설명\nJava/Kotlin의 기본 데이터 구조 (배열, 리스트, 트리)를 추출하여 JSON으로 변환합니다.\n\n## 체크리스트\n- [ ] VisualizationExtractor 인터페이스 정의\n- [ ] ArrayExtractor 구현 (Java 배열, ArrayList)\n- [ ] TreeNodeExtractor 구현 (이진 트리)\n- [ ] JDI를 사용한 객체 필드 접근\n- [ ] 타입 감지 로직\n- [ ] 순환 참조 감지 및 처리\n- [ ] 추출기 등록 시스템\n\n## 수용 기준\n- Java 배열 (int[], String[] 등)을 배열 시각화 데이터로 변환\n- ArrayList를 배열 시각화 데이터로 변환\n- TreeNode 클래스를 트리 시각화 데이터로 변환\n- 순환 참조가 있어도 크래시 없이 처리\n- 단위 테스트로 각 추출기 검증\n\n## 예상 소요 시간\n4-5일\n\n## 참고 자료\n- [JDI - Java Debug Interface](https://docs.oracle.com/javase/8/docs/jdk/api/jpda/jdi/)\n- docs/architecture.md - 데이터 추출 레이어\n- docs/visualization-schema.md",
+    "labels": ["phase-1", "data-extraction", "priority: high"]
+  },
+  {
+    "title": "[Phase 1] 엔드-투-엔드 통합 테스트",
+    "body": "## 작업 설명\n전체 플로우를 통합하여 실제 디버깅 시나리오에서 테스트합니다.\n\n## 체크리스트\n- [ ] 샘플 Java 프로젝트 생성 (배열, 트리 예제)\n- [ ] 통합 테스트 시나리오 작성\n- [ ] 디버거 시작 → 표현식 평가 → 시각화 표시 전체 플로우 테스트\n- [ ] 배열 시각화 E2E 테스트\n- [ ] 트리 시각화 E2E 테스트\n- [ ] 에러 시나리오 테스트\n- [ ] 성능 테스트 (렌더링 시간)\n\n## 수용 기준\n- 샘플 프로젝트를 디버깅하면 시각화가 정상 표시됨\n- 배열 변수를 평가하면 막대 그래프가 표시됨\n- 트리 변수를 평가하면 계층 구조가 표시됨\n- 스텝 실행 시 시각화가 업데이트됨\n- 1000개 요소 배열이 1초 이내 렌더링됨\n\n## 예상 소요 시간\n3-4일\n\n## 참고 자료\n- docs/PRD.md - 수용 기준 섹션\n- docs/architecture.md - 데이터 흐름",
+    "labels": ["phase-1", "testing", "priority: high"]
+  },
+  {
+    "title": "[Phase 1] 문서 업데이트 및 예제 작성",
+    "body": "## 작업 설명\nPhase 1 완료 시점의 문서를 업데이트하고 사용 예제를 작성합니다.\n\n## 체크리스트\n- [ ] README.md 설치 및 사용 섹션 업데이트\n- [ ] 빌드 가이드 작성\n- [ ] 개발 환경 설정 가이드\n- [ ] 샘플 프로젝트 README 작성\n- [ ] 스크린샷 추가\n- [ ] 데모 GIF 생성\n- [ ] CHANGELOG.md 작성\n\n## 수용 기준\n- README.md에 명확한 설치 및 사용 방법 기술\n- 샘플 프로젝트가 docs/examples/에 포함됨\n- 스크린샷으로 주요 기능 시연\n- CHANGELOG.md에 Phase 1 변경사항 기록\n\n## 예상 소요 시간\n2-3일\n\n## 참고 자료\n- CONTRIBUTING.md\n- docs/PRD.md",
+    "labels": ["phase-1", "documentation", "priority: medium"]
+  }
+]
