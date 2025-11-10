@@ -1,5 +1,6 @@
 package com.github.algorithmvisualizer.debugger
 
+import com.intellij.debugger.engine.JavaValue
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
@@ -91,6 +92,70 @@ class ExpressionEvaluator {
     }
 
     /**
+     * XValue에서 실제 값을 추출합니다.
+     *
+     * Java 디버거의 경우 JavaValue를 사용하여 descriptor에서 값을 가져옵니다.
+     */
+    private fun extractValueString(xValue: XValue): CompletableFuture<String> {
+        val future = CompletableFuture<String>()
+
+        try {
+            // Java 디버거의 경우 JavaValue에서 직접 값 추출 시도
+            if (xValue is JavaValue) {
+                try {
+                    val descriptor = xValue.descriptor
+                    val valueText = descriptor.calcValueName() ?: descriptor.toString()
+                    future.complete(valueText)
+                    return future
+                } catch (e: Exception) {
+                    logger.debug("Failed to extract from JavaValue, falling back to computePresentation", e)
+                }
+            }
+
+            // 일반적인 방법: computePresentation 사용
+            xValue.computePresentation(object : com.intellij.xdebugger.frame.XValueNode {
+                override fun setPresentation(
+                    icon: javax.swing.Icon?,
+                    type: String?,
+                    value: String,
+                    hasChildren: Boolean
+                ) {
+                    // 간단한 형태의 setPresentation
+                    future.complete(value)
+                }
+
+                override fun setPresentation(
+                    icon: javax.swing.Icon?,
+                    presentation: com.intellij.xdebugger.frame.presentation.XValuePresentation,
+                    hasChildren: Boolean
+                ) {
+                    // XValuePresentation 형태
+                    val type = presentation.type ?: "unknown"
+                    future.complete(type)
+                }
+
+                override fun setFullValueEvaluator(fullValueEvaluator: com.intellij.xdebugger.frame.XFullValueEvaluator) {
+                    // 전체 값 평가기는 무시
+                }
+            }, com.intellij.xdebugger.frame.XValuePlace.TREE)
+
+            // 타임아웃: 2초 후에도 완료되지 않으면 기본값 반환
+            CompletableFuture.delayedExecutor(2, TimeUnit.SECONDS).execute {
+                if (!future.isDone) {
+                    logger.warn("Value extraction timed out")
+                    future.complete("<timeout>")
+                }
+            }
+
+        } catch (e: Exception) {
+            logger.error("Failed to extract value string", e)
+            future.complete("Error: ${e.message}")
+        }
+
+        return future
+    }
+
+    /**
      * 표현식 평가와 값 추출을 한 번에 수행합니다.
      *
      * @param session 현재 디버그 세션
@@ -101,12 +166,14 @@ class ExpressionEvaluator {
         session: XDebugSession,
         expression: String
     ): CompletableFuture<Pair<String?, String?>> {
-        return evaluateExpression(session, expression).thenApply { result ->
+        return evaluateExpression(session, expression).thenCompose { result ->
             if (result.success && result.value != null) {
-                // 간단한 문자열 표현 사용 (Phase 1-9에서 더 정교하게 구현 예정)
-                Pair(result.value.toString(), null)
+                // XValue에서 실제 값 추출
+                extractValueString(result.value).thenApply { valueStr ->
+                    Pair(valueStr, null)
+                }
             } else {
-                Pair(result.error, null)
+                CompletableFuture.completedFuture(Pair(result.error, null))
             }
         }
     }
