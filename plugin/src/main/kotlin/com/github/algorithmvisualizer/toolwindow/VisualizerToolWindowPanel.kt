@@ -1,8 +1,11 @@
 package com.github.algorithmvisualizer.toolwindow
 
+import com.github.algorithmvisualizer.collectors.SnapshotCollector
 import com.github.algorithmvisualizer.debugger.DebuggerIntegration
+import com.github.algorithmvisualizer.debugger.DebuggerListener
 import com.github.algorithmvisualizer.debugger.DebuggerStateListener
 import com.github.algorithmvisualizer.debugger.ExpressionEvaluator
+import com.github.algorithmvisualizer.detectors.AlgorithmDetector
 import com.github.algorithmvisualizer.ui.JCEFVisualizationPanel
 import com.intellij.openapi.project.Project
 import com.intellij.ui.jcef.JBCefApp
@@ -30,6 +33,12 @@ class VisualizerToolWindowPanel(private val project: Project) : JPanel(BorderLay
     private val expressionEvaluator: ExpressionEvaluator = ExpressionEvaluator()
     private var jcefPanel: JCEFVisualizationPanel? = null
     private val useJCEF: Boolean = JBCefApp.isSupported()
+
+    // 자동 시각화 컴포넌트
+    private val algorithmDetector: AlgorithmDetector = AlgorithmDetector()
+    private val snapshotCollector: SnapshotCollector = SnapshotCollector()
+    private var debuggerListener: DebuggerListener? = null
+    private val autoVisualizeCheckbox: JCheckBox = JCheckBox("자동 시각화", true)
 
     init {
         border = JBUI.Borders.empty(8)
@@ -121,6 +130,13 @@ class VisualizerToolWindowPanel(private val project: Project) : JPanel(BorderLay
         }
         inputPanel.add(button)
 
+        // 자동 시각화 체크박스
+        autoVisualizeCheckbox.toolTipText = "디버깅 중 정렬 알고리즘을 자동으로 감지하고 시각화합니다"
+        autoVisualizeCheckbox.addActionListener {
+            toggleAutoVisualization(autoVisualizeCheckbox.isSelected)
+        }
+        inputPanel.add(autoVisualizeCheckbox)
+
         panel.add(inputPanel, BorderLayout.CENTER)
 
         return panel
@@ -134,20 +150,40 @@ class VisualizerToolWindowPanel(private val project: Project) : JPanel(BorderLay
             override fun onSessionStarted(session: XDebugSession) {
                 updateStatus("디버깅 세션 시작됨: ${session.sessionName}")
                 evaluateButton.isEnabled = true
+
+                // 자동 시각화가 활성화되어 있으면 DebuggerListener 생성
+                if (autoVisualizeCheckbox.isSelected) {
+                    initializeDebuggerListener(session)
+                }
             }
 
             override fun onSessionStopped(session: XDebugSession) {
                 updateStatus("디버깅 세션 종료됨")
                 evaluateButton.isEnabled = false
+
+                // DebuggerListener 정리
+                debuggerListener?.onSessionEnd()
+                debuggerListener = null
+                snapshotCollector.clear()
             }
 
             override fun onSessionChanged(previous: XDebugSession?, current: XDebugSession?) {
                 if (current != null) {
                     updateStatus("디버깅 세션 활성화: ${current.sessionName}")
                     evaluateButton.isEnabled = true
+
+                    // 자동 시각화가 활성화되어 있으면 DebuggerListener 생성
+                    if (autoVisualizeCheckbox.isSelected) {
+                        initializeDebuggerListener(current)
+                    }
                 } else {
                     updateStatus("디버깅 세션 없음")
                     evaluateButton.isEnabled = false
+
+                    // DebuggerListener 정리
+                    debuggerListener?.onSessionEnd()
+                    debuggerListener = null
+                    snapshotCollector.clear()
                 }
             }
         })
@@ -157,9 +193,75 @@ class VisualizerToolWindowPanel(private val project: Project) : JPanel(BorderLay
             val session = debuggerIntegration.getCurrentSession()
             updateStatus("디버깅 중: ${session?.sessionName}")
             evaluateButton.isEnabled = true
+
+            // 자동 시각화가 활성화되어 있으면 DebuggerListener 초기화
+            if (autoVisualizeCheckbox.isSelected && session != null) {
+                initializeDebuggerListener(session)
+            }
         } else {
             updateStatus("디버깅 세션을 시작하세요")
             evaluateButton.isEnabled = false
+        }
+    }
+
+    /**
+     * DebuggerListener 초기화
+     */
+    private fun initializeDebuggerListener(session: XDebugSession) {
+        if (debuggerListener != null) {
+            return // 이미 초기화됨
+        }
+
+        debuggerListener = DebuggerListener(session).apply {
+            setAlgorithmDetector(algorithmDetector)
+            setSnapshotCollector(snapshotCollector)
+            enableAutoCapture()
+
+            // 스텝 이벤트 콜백
+            onStepEvent {
+                // 알고리즘이 감지되고 스냅샷이 수집되면 시각화
+                val algorithm = getDetectedAlgorithm()
+                val snapshotCount = snapshotCollector.getSnapshotCount()
+
+                if (algorithm != null && snapshotCount > 0) {
+                    SwingUtilities.invokeLater {
+                        updateStatus("감지된 알고리즘: $algorithm (스냅샷: $snapshotCount)")
+                        showAutoVisualization()
+                    }
+                }
+            }
+        }
+
+        updateStatus("자동 시각화 활성화됨")
+    }
+
+    /**
+     * 자동 시각화 토글
+     */
+    private fun toggleAutoVisualization(enabled: Boolean) {
+        if (enabled) {
+            val session = debuggerIntegration.getCurrentSession()
+            if (session != null) {
+                initializeDebuggerListener(session)
+                updateStatus("자동 시각화 활성화됨")
+            } else {
+                updateStatus("디버깅 세션이 없습니다")
+            }
+        } else {
+            debuggerListener?.disableAutoCapture()
+            updateStatus("자동 시각화 비활성화됨")
+        }
+    }
+
+    /**
+     * 자동 수집된 스냅샷 시각화
+     */
+    private fun showAutoVisualization() {
+        if (useJCEF && jcefPanel != null) {
+            val jsonData = snapshotCollector.toJson()
+            jcefPanel?.showVisualization(jsonData)
+        } else {
+            updateStatus("JCEF가 지원되지 않아 자동 시각화를 표시할 수 없습니다", isError = true)
         }
     }
 
