@@ -1,113 +1,196 @@
-# JetBrains IDE용 알고리즘 디버그 시각화 도구
+# Debug Visualizer for JetBrains IDEs
 
-JetBrains IDE(IntelliJ IDEA, PyCharm, WebStorm, CLion 등)를 위한 강력한 디버깅 시각화 플러그인으로, 풍부한 시각적 표현을 통해 개발자가 알고리즘 실행을 이해할 수 있도록 돕습니다.
+JetBrains IDE(IntelliJ IDEA, PyCharm, WebStorm, CLion 등)를 위한 범용 디버깅 시각화 플러그인입니다. [VSCode Debug Visualizer](https://github.com/hediet/vscode-debug-visualizer)의 핵심 기능을 JetBrains 생태계로 포팅하여, **F8 스텝마다 자동으로 업데이트되는 실시간 시각화**를 제공합니다.
 
 ## 개발 동기
 
-[VSCode Debug Visualizer](https://github.com/hediet/vscode-debug-visualizer)에서 영감을 받아, 이 플러그인은 JetBrains 생태계에 포괄적인 알고리즘 시각화 기능을 제공하며, 다양한 프로그래밍 언어와 알고리즘 유형에 대한 향상된 지원을 제공합니다.
+VSCode Debug Visualizer에서 영감을 받아, JetBrains IDE에서도 동일한 수준의 디버깅 경험을 제공하고자 합니다. 단순한 알고리즘 시각화를 넘어, **모든 데이터 구조를 실시간으로 시각화**하여 개발자가 코드 실행을 직관적으로 이해할 수 있도록 돕습니다.
+
+## 핵심 원칙
+
+**1. 실시간 모니터링 우선**
+- ✅ F8 스텝마다 즉시 UI 업데이트
+- ❌ "Play" 버튼으로 애니메이션 재생 (제거됨)
+
+**2. 브레이크포인트 위치 무관**
+- ✅ Variables 패널에 보이는 모든 변수 시각화 가능
+- ❌ 특정 알고리즘 메서드에서만 동작
+
+**3. 자료구조 중립적**
+- ✅ 배열, 트리, 그래프, 스택, 큐, 맵 등 모든 자료구조
+- ❌ 정렬 알고리즘만 지원
+
+**4. 타입 자동 감지**
+- ✅ 데이터 구조를 분석하여 자동으로 최적 시각화 선택
+- ❌ 사용자가 시각화 타입 수동 선택
+
+**5. 다중 언어 지원**
+- ✅ Java, Kotlin, Python, JavaScript, TypeScript, C++, C#, Go, Rust 등
 
 ## 주요 기능
 
-### 지원하는 시각화
+### 13종 시각화 타입 (VSCode 호환)
 
-- **그래프 구조**: 노드와 엣지가 있는 그래프 시각화 (방향/무방향, 가중치)
-- **트리 구조**: 이진 트리, BST, AVL, Red-Black 트리, Trie, 세그먼트 트리
-- **배열 & 리스트**: 막대 그래프, 그리드 뷰, 포인터/윈도우 하이라이팅이 있는 히트맵
-- **테이블**: DP 테이블, 인접 행렬, 거리 테이블
-- **차트**: 선 그래프, 히스토그램, 파이 차트 (Plotly 기반)
-- **커스텀 시각화**: 자체 시각화 로직 정의 가능
+| 타입 | 설명 | 사용 예시 |
+|------|------|-----------|
+| **graph** | 노드-엣지 그래프 | 그래프 알고리즘 (DFS, BFS, Dijkstra) |
+| **tree** | 계층적 트리 | 이진 트리, AVL, Red-Black Tree |
+| **array** | 1D 배열 막대 그래프 | 정렬 알고리즘, 투 포인터 |
+| **table** | 2D 테이블 | DP 테이블, 행렬 |
+| **grid** | 2D 그리드 | 체스판, 미로, 2D 게임 |
+| **plotly** | Plotly.js 차트 | 통계, 시계열 데이터 |
+| **text** | 포맷된 텍스트 | JSON, XML, 로그 |
+| **monacoText** | 코드 에디터 | 소스 코드, Diff |
+| **image** | 이미지 (PNG base64) | 이미지 처리 알고리즘 |
+| **svg** | SVG | 벡터 그래픽 |
+| **graphviz-dot** | Graphviz DOT | 복잡한 그래프 |
+| **ast** | 추상 구문 트리 | 컴파일러, 파서 |
+| **object-graph** | 객체 참조 그래프 | 메모리 구조, 포인터 관계 |
 
-### 알고리즘 유형 커버리지
+### 실시간 모니터링 워크플로우
 
-1. **배열/리스트 알고리즘**
-   - 정렬 (버블, 퀵, 병합, 힙 정렬)
-   - 투 포인터, 슬라이딩 윈도우
-   - 부분 배열 문제
+```
+1. 디버깅 세션 시작 (중단점 설정)
+   ↓
+2. Debug Visualizer 툴 윈도우 열기
+   ↓
+3. 표현식 입력 (예: myTree, graph.adjacencyList, dpTable)
+   ↓
+4. 디버거가 중단점에서 멈춤
+   ↓
+5. 자동으로 표현식 평가 및 시각화 렌더링
+   ↓
+6. F8 (Step Over) 실행
+   ↓
+7. 즉시 표현식 재평가 → 시각화 자동 업데이트
+   ↓
+8. 변경된 부분 하이라이트 (diff)
+```
 
-2. **트리 알고리즘**
-   - 순회 (전위, 중위, 후위, 레벨 순서)
-   - BST 연산
-   - 균형 트리 회전
-   - 트리 수정
+### Priority-based Data Extractor System
 
-3. **그래프 알고리즘**
-   - 단계별 순회가 있는 DFS/BFS
-   - 최단 경로 (다익스트라, 벨만-포드, 플로이드-워셜)
-   - MST (크루스칼, 프림)
-   - 위상 정렬
-   - 네트워크 플로우
+데이터 구조를 자동으로 감지하여 최적의 시각화를 선택합니다:
 
-4. **동적 프로그래밍**
-   - 채우기 순서가 있는 DP 테이블 시각화
-   - 백트래킹 경로 하이라이팅
-   - 메모이제이션 상태 추적
+```kotlin
+1. GetVisualizationDataExtractor (priority: 600)
+   - .getVisualizationData() 메서드가 있는 객체
+2. TreeExtractor (priority: 550)
+   - TreeNode 타입 감지
+3. GraphExtractor (priority: 540)
+   - Graph 타입 감지
+4. ArrayExtractor (priority: 500)
+   - 배열/리스트 감지
+5. MapExtractor (priority: 490)
+   - Map, HashMap 감지
+6. ListExtractor (priority: 480)
+   - List, ArrayList 감지
+7. ObjectGraphExtractor (priority: 98)
+   - 일반 객체 참조 그래프
+8. ToStringExtractor (priority: 50)
+   - Fallback: toString() 출력
+```
 
-5. **백트래킹**
-   - 결정 트리 시각화
-   - 보드/그리드 상태 (N-Queens, 스도쿠)
-   - 가지치기 시각화
+### 언어 지원 (Tier 시스템)
 
-6. **문자열 알고리즘**
-   - 패턴 매칭 (KMP, Rabin-Karp)
-   - 문자 단위 하이라이팅
-   - 실패 함수 테이블
+#### Tier 1: 완전 지원 (JDI / 런타임 코드 주입)
+- **Java, Kotlin**: JDI (Java Debug Interface) 직접 사용
+- **JavaScript, TypeScript**: Chrome DevTools Protocol + 런타임 코드 주입
+- **지원 기능**: 모든 13종 시각화, 커스텀 추출기, 실시간 모니터링
 
-7. **힙/우선순위 큐**
-   - 힙 트리 구조
-   - 부모-자식 관계
-   - 힙 속성 검증
+#### Tier 2: 기본 지원 (외부 모듈)
+- **Python**: debugpy 프로토콜 + pydebugvisualizer 모듈
+- **지원 기능**: 주요 시각화 타입, 실시간 모니터링
 
-8. **고급 자료구조**
-   - 집합 그룹화가 있는 Union-Find (Disjoint Set)
-   - 펜윅 트리 (BIT)
-   - LRU 캐시 상태
-   - 스택/큐 연산
-
-### 언어 지원
-
-#### Tier 1 (완전 지원 - 자동 데이터 추출)
-- Java
-- Kotlin
-- Python
-- JavaScript/TypeScript
-
-#### Tier 2 (기본 지원 - JSON 직렬화)
-- C++
-- Go
-- Rust
-- Scala
-
-#### Tier 3 (제한적 지원)
-- C#
-- PHP
-- Ruby
+#### Tier 3: 범용 지원 (변수 참조 탐색)
+- **C++, C#, Go, Rust, Scala**: XDebugger 변수 참조 탐색
+- **지원 기능**: object-graph 시각화, 제한적 실시간 모니터링
 
 ## 아키텍처
 
+### 시스템 아키텍처 (v2.0.0)
+
 ```
-algorithm-debug-visualizer/
-├── plugin/                 # IntelliJ Platform 플러그인 코드
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── kotlin/    # 플러그인 로직
-│   │   │   └── resources/ # 플러그인 설정
-│   │   └── test/
+User                                 IntelliJ IDE
+  │
+  ├─ F8 (Step Over)
+  │     ↓
+  │  ┌──────────────────────────────────────────────────────────┐
+  │  │ DebuggerListener (XDebugSessionListener)                 │
+  │  │  - sessionPaused()      # F8 스텝 감지                   │
+  │  │  - sessionResumed()     # 실행 재개 감지                  │
+  │  │  - stackFrameChanged()  # 스택 프레임 변경 감지            │
+  │  └──────────────────────────────────────────────────────────┘
+  │              ↓
+  │  ┌──────────────────────────────────────────────────────────┐
+  │  │ VisualizationWatchModel (Observable)                     │
+  │  │  - StateFlow<DataExtractionState>  # 상태 관리           │
+  │  │  - CancellationToken               # 이전 요청 취소       │
+  │  │  - Debouncing (330ms)              # 에러 후 대기         │
+  │  └──────────────────────────────────────────────────────────┘
+  │              ↓
+  │  ┌──────────────────────────────────────────────────────────┐
+  │  │ DispatchingVisualizationBackend                          │
+  │  │  - JvmVisualizationBackend      # Java, Kotlin           │
+  │  │  - JsVisualizationBackend       # JS, TS                 │
+  │  │  - PythonVisualizationBackend   # Python                 │
+  │  │  - GenericVisualizationBackend  # C++, C#, Go, Rust      │
+  │  └──────────────────────────────────────────────────────────┘
+  │              ↓
+  │  ┌──────────────────────────────────────────────────────────┐
+  │  │ DataExtractorRegistry (Priority-based)                   │
+  │  │  [600] GetVisualizationDataExtractor                     │
+  │  │  [550] TreeExtractor                                      │
+  │  │  [540] GraphExtractor                                     │
+  │  │  [500] ArrayExtractor                                     │
+  │  │  [490] MapExtractor                                       │
+  │  │  [480] ListExtractor                                      │
+  │  │  [98]  ObjectGraphExtractor                               │
+  │  │  [50]  ToStringExtractor                                  │
+  │  └──────────────────────────────────────────────────────────┘
+  │              ↓
+  │  ┌──────────────────────────────────────────────────────────┐
+  │  │ JCEF WebView (Chromium)                                  │
+  │  │  - window.visualizerAPI.updateVisualization(json)        │
+  │  └──────────────────────────────────────────────────────────┘
+  │              ↓
+  │  ┌──────────────────────────────────────────────────────────┐
+  │  │ React UI (visualizer-ui/)                                │
+  │  │  ├─ VisualizationRouter                                  │
+  │  │  ├─ ArrayVisualizer     (D3.js)                          │
+  │  │  ├─ GraphVisualizer     (vis.js)                         │
+  │  │  ├─ TreeVisualizer      (SVG)                            │
+  │  │  ├─ TableVisualizer     (Perspective.js)                 │
+  │  │  └─ ... (13 visualizers)                                 │
+  │  └──────────────────────────────────────────────────────────┘
+  └─ Visual Output
+```
+
+### 디렉토리 구조
+
+```
+debug-visualizer-jetbrains/
+├── plugin/                 # IntelliJ Platform 플러그인
+│   ├── src/main/kotlin/
+│   │   ├── debugger/       # DebuggerListener, ExpressionEvaluator
+│   │   ├── backend/        # DispatchingBackend, DataExtractorRegistry
+│   │   ├── extractors/     # 8개 기본 추출기
+│   │   ├── toolwindow/     # VisualizerToolWindowPanel
+│   │   └── ui/             # JCEFVisualizationPanel
+│   ├── src/test/kotlin/    # 60개+ 단위 테스트
 │   └── build.gradle.kts
-├── visualizer-ui/         # 웹 기반 시각화 UI
+├── visualizer-ui/          # React 시각화 UI
 │   ├── src/
-│   │   ├── components/    # React/Vue 컴포넌트
-│   │   ├── visualizers/   # 시각화 구현
-│   │   └── styles/
+│   │   ├── components/     # ArrayVisualizer, GraphVisualizer, TreeVisualizer
+│   │   ├── types/          # visualization.ts (13개 타입)
+│   │   └── App.tsx         # VisualizationRouter
+│   ├── test/               # 15개+ React 테스트
 │   └── package.json
-├── data-extraction/       # 언어별 데이터 추출기
-│   ├── java/
-│   ├── kotlin/
-│   ├── python/
-│   └── javascript/
-└── docs/                  # 문서
-    ├── architecture.md
-    ├── api-reference.md
-    └── developer-guide.md
+└── docs/                   # 프로젝트 문서
+    ├── PRD.md              # 제품 요구사항 정의서 (v2.0.0)
+    ├── architecture.md     # 시스템 아키텍처 (v2.0.0)
+    ├── visualization-schema.md  # 데이터 스키마 (v2.0.0)
+    ├── TESTING.md          # 테스트 가이드
+    └── CLAUDE.md           # Claude Code 가이드
 ```
 
 ## 기술 스택
@@ -186,11 +269,11 @@ cd debug_visualizer_for_jetbrains_ide/plugin
 4. **스테핑**
    - Step Over / Step Into 실행 시 시각화가 자동 업데이트됩니다
 
-**현재 상태**: ✅ Phase 1 완료 → Phase 2 진행 예정
+**현재 상태**: ✅ Phase 1 완료 → **🔄 Phase 2-0 (코드 정리) 진행 중**
 
 ## 프로젝트 상태
 
-### ✅ Phase 1: 기본 프로토타입 (완료 - 2025-11-11)
+### ✅ Phase 1: 기본 프로토타입 (완료 - 2025-01-11)
 - ✅ IntelliJ Platform Plugin 초기화
 - ✅ 디버거 API 통합 (XDebuggerManager)
 - ✅ JDI 기반 표현식 평가 (모든 프리미티브 타입 지원)
@@ -205,34 +288,46 @@ cd debug_visualizer_for_jetbrains_ide/plugin
 - D3.js 7.8.5
 - JUnit 5 + MockK + Vitest + React Testing Library
 
-### 🚀 Phase 2: 알고리즘별 맞춤 시각화 (진행 예정 - 2-3주)
-- [ ] **정렬 알고리즘 시각화** (버블, 퀵, 병합 정렬)
-  - [ ] SortVisualizer 컴포넌트 (TDD)
-  - [ ] 알고리즘 자동 감지
-  - [ ] 스냅샷 수집 및 애니메이션
-- [ ] **트리 구조 시각화** (이진 트리, BST, AVL)
-  - [ ] TreeVisualizer 컴포넌트 (TDD)
-  - [ ] TreeNode 파서 (JDI 기반)
-  - [ ] 삽입/삭제/탐색 애니메이션
-- [ ] **DP 테이블 시각화**
-  - [ ] DPTableVisualizer 컴포넌트 (TDD)
-  - [ ] 2D 히트맵
-  - [ ] 최적 경로 추적
-- [ ] **그래프 시각화** (보너스)
+### 🔄 Phase 2-0: 코드 정리 (진행 중 - 2025-01-12)
 
-### 📋 Phase 3: 실시간 스텝 추적 (예정)
-- [ ] 디버거 스텝 이벤트 자동 감지
-- [ ] 실시간 UI 업데이트
-- [ ] 타임라인 재생 (TimeMachine)
-- [ ] 코드-시각화 양방향 점프
-- [ ] 애니메이션 엔진
-- [ ] 비교 모드
+**목적**: 정렬 알고리즘 전용 코드 제거 및 범용 Debug Visualizer로 전환
+
+- [ ] [#32] AlgorithmDetector 제거 및 범용화 (2시간)
+- [ ] [#33] SnapshotCollector 범용화 리팩토링 (4시간)
+- [ ] [#34] React UI 리팩토링 (Play 버튼 제거, 13종 타입) (5시간)
+- [ ] [#35] 통합 테스트 및 문서 업데이트 (3시간)
+
+**예상 소요**: 14시간
+
+### 🚀 Phase 2: 실시간 모니터링 시스템 (예정 - 7주)
+- [ ] [#23] Phase 2-1: 디버거 이벤트 리스너 구현 (XDebugSessionListener)
+- [ ] [#24] Phase 2-2: Observable 상태 관리 시스템 (VisualizationWatchModel)
+- [ ] [#25] Phase 2-3: 우선순위 기반 데이터 추출기 시스템 (8개 추출기)
+- [ ] [#26] Phase 2-4: React UI 다중 렌더러 구현 (Graph, Tree, Table)
+- [ ] [#27] Phase 2-5: 실시간 업데이트 파이프라인 통합
+
+**핵심 목표**:
+- F8 스텝 → 즉시 UI 업데이트 (< 200ms)
+- 브레이크포인트 위치 무관
+- 타입 자동 감지 (Priority-based Extractor)
+- 13종 시각화 완성
+
+### 📋 Phase 3: 다중 언어 지원 (예정 - 4주)
+- [ ] [#28] Phase 3-1: JavaScript/TypeScript 런타임 코드 주입 시스템
+- [ ] [#29] Phase 3-2: Python debugpy 프로토콜 연동
+- [ ] [#30] Phase 3-3: 범용 언어 지원 (C++, C#, Go, Rust)
+
+### 🎯 Phase 4: 고급 기능 (예정 - 2주)
+- [ ] [#31] 사용자 정의 추출기 API
+- [ ] [#31] 실행 히스토리 (Time-Travel Debugging)
+- [ ] [#31] 코드 하이라이트 연동 (JetBrains 전용)
+- [ ] [#31] 리팩토링 제안 (JetBrains 전용)
 
 **참고 문서**:
-- [Phase 1 완료 보고서](./docs/PHASE1_COMPLETE.md)
-- [Phase 2 상세 계획](./docs/PHASE2_PLAN.md)
-- [Phase 3 상세 계획](./docs/PHASE3_PLAN.md)
-- [다음 작업 가이드](./NEXT_STEPS.md)
+- [ISSUES_SUMMARY.md](./ISSUES_SUMMARY.md) - GitHub Issues 전체 요약
+- [PROJECT_STATUS.md](./PROJECT_STATUS.md) - 프로젝트 현황 대시보드
+- [PRD.md](./docs/PRD.md) - 제품 요구사항 정의서 (v2.0.0)
+- [architecture.md](./docs/architecture.md) - 시스템 아키텍처 (v2.0.0)
 
 ## 기여하기
 
