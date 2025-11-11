@@ -190,20 +190,27 @@ class DebuggerListener(private val debugSession: XDebugSession) {
 
     /**
      * 스택 프레임에서 알고리즘 감지
+     *
+     * 실제 소스 코드를 읽어서 패턴 분석으로 알고리즘 감지
      */
     private fun detectAlgorithmFromStackFrame(stackFrame: XStackFrame) {
         try {
-            // 스택 프레임에서 메서드명 추출
             val sourcePosition = stackFrame.sourcePosition ?: return
-            val methodName = sourcePosition.file.name.replace(".java", "")
-                .replace(".kt", "")
-                .replace("Example", "")
-                .replace("Test", "")
+            val file = sourcePosition.file
 
-            // 메서드명으로 알고리즘 감지
-            val result = algorithmDetector?.detectFromMethodName(methodName) ?: return
+            // 소스 파일 전체 읽기
+            val sourceCode = try {
+                val inputStream = file.inputStream
+                inputStream.bufferedReader().use { it.readText() }
+            } catch (e: Exception) {
+                return
+            }
 
-            if (result.confidence > 0.5) {
+            // 코드 패턴으로 알고리즘 감지
+            val result = algorithmDetector?.detectFromCode(sourceCode) ?: return
+
+            // 신뢰도가 0.5 이상이면 알고리즘 확정
+            if (result.confidence >= 0.5) {
                 detectedAlgorithm = result.algorithm
             }
         } catch (e: Exception) {
