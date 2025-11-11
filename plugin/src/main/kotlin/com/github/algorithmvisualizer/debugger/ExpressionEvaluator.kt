@@ -227,15 +227,45 @@ class ExpressionEvaluator {
         return evaluateExpression(session, expression).thenCompose { result ->
             logger.warn("=== evaluateExpression result: success=${result.success}, hasValue=${result.value != null} ===")
             if (result.success && result.value != null) {
+                // 타입 정보 추출
+                val type = extractType(result.value)
+                logger.warn("=== Extracted type: $type ===")
+
                 // XValue에서 실제 값 추출
                 extractValueString(result.value).thenApply { valueStr ->
-                    logger.warn("=== FINAL extracted value: $valueStr ===")
-                    Pair(valueStr, null)
+                    logger.warn("=== FINAL extracted value: $valueStr, type: $type ===")
+                    Pair(valueStr, type)
                 }
             } else {
                 logger.warn("=== FINAL error: ${result.error} ===")
                 CompletableFuture.completedFuture(Pair(result.error, null))
             }
+        }
+    }
+
+    /**
+     * XValue에서 타입 정보를 추출합니다.
+     */
+    private fun extractType(xValue: XValue): String? {
+        return try {
+            if (xValue is JavaValue) {
+                val descriptor = xValue.descriptor
+                val jdiValue = descriptor.value
+
+                when (jdiValue) {
+                    is com.sun.jdi.ArrayReference -> {
+                        val arrayType = jdiValue.type() as? com.sun.jdi.ArrayType
+                        arrayType?.name() ?: "unknown[]"
+                    }
+                    is com.sun.jdi.ObjectReference -> jdiValue.type().name()
+                    else -> jdiValue?.type()?.name()
+                }
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to extract type: ${e.message}")
+            null
         }
     }
 
