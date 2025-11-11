@@ -301,6 +301,26 @@ class VisualizerToolWindowPanel(private val project: Project) : JPanel(BorderLay
             .thenAccept { (value, type) ->
                 SwingUtilities.invokeLater {
                     if (value != null) {
+                        // 배열 타입이면 SnapshotCollector에 추가
+                        if (type?.contains("[]") == true && value.startsWith("[") && value.endsWith("]")) {
+                            try {
+                                // "[1, 2, 3]" 형태를 IntArray로 변환
+                                val arrayValues = value
+                                    .removeSurrounding("[", "]")
+                                    .split(",")
+                                    .map { it.trim().toIntOrNull() }
+                                    .filterNotNull()
+                                    .toIntArray()
+
+                                if (arrayValues.isNotEmpty()) {
+                                    snapshotCollector.captureSnapshot(arrayValues)
+                                    updateStatus("배열 스냅샷 수집됨: ${arrayValues.size}개 요소")
+                                }
+                            } catch (e: Exception) {
+                                // 배열 파싱 실패는 무시
+                            }
+                        }
+
                         showEvaluationResult(expression, value, type)
                         updateStatus("평가 완료: $expression = $value")
                     } else {
