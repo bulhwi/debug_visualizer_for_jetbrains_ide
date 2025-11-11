@@ -223,16 +223,53 @@ class DebuggerListener(private val debugSession: XDebugSession) {
     /**
      * 스택 프레임에서 스냅샷 수집
      *
-     * 참고: XStackFrame API를 통한 비동기 변수 접근은 복잡하므로
-     * 현재는 간단한 구현만 제공. 실제 배열 추출은 ExpressionEvaluator 사용 권장.
-     *
-     * TODO: JavaStackFrame에서 직접 배열 추출 구현
-     * - JavaStackFrame.stackFrameProxy를 통해 SuspendContext 접근
-     * - captureSnapshot(suspendContext) 호출
+     * ExpressionEvaluator를 사용하여 배열 변수를 자동으로 평가하고 스냅샷 수집
      */
     private fun captureSnapshotFromStackFrame(stackFrame: XStackFrame) {
-        // 간단한 더미 스냅샷 - 실제 구현은 ExpressionEvaluator 통합 필요
-        // 현재는 알고리즘 감지만 작동하고, 스냅샷은 수동 Evaluate로 수집
+        try {
+            val evaluator = ExpressionEvaluator()
+
+            // 일반적인 배열 변수명 목록
+            val commonArrayNames = listOf("arr", "array", "nums", "data", "values")
+
+            // 첫 번째로 찾은 배열 변수를 평가
+            for (arrayName in commonArrayNames) {
+                evaluator.evaluateAndExtract(debugSession, arrayName)
+                    .thenAccept { (value, type) ->
+                        if (value != null && type?.contains("[]") == true) {
+                            // 배열 값 파싱 ("[1, 2, 3]" 또는 "{1, 2, 3}" 형식)
+                            try {
+                                val cleanedValue = value
+                                    .replace("[", "")
+                                    .replace("]", "")
+                                    .replace("{", "")
+                                    .replace("}", "")
+
+                                val arrayValues = cleanedValue
+                                    .split(",")
+                                    .map { it.trim().toIntOrNull() }
+                                    .filterNotNull()
+                                    .toIntArray()
+
+                                if (arrayValues.isNotEmpty()) {
+                                    snapshotCollector?.captureSnapshot(arrayValues)
+                                }
+                            } catch (e: Exception) {
+                                // 파싱 실패는 무시
+                            }
+                        }
+                    }
+                    .exceptionally {
+                        // 평가 실패는 무시하고 다음 변수명 시도
+                        null
+                    }
+
+                // 첫 번째 성공한 변수로 종료
+                break
+            }
+        } catch (e: Exception) {
+            // ExpressionEvaluator 사용 실패 시 무시
+        }
     }
 
     /**
