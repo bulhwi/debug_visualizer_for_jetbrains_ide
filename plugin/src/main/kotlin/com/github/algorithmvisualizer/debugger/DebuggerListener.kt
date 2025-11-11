@@ -5,7 +5,10 @@ import com.github.algorithmvisualizer.detectors.AlgorithmDetector
 import com.github.algorithmvisualizer.detectors.SortAlgorithm
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XDebugSessionListener
+import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.*
+import javax.swing.SwingUtilities
 
 /**
  * 디버거 이벤트를 감지하고 자동으로 스냅샷을 수집하는 리스너
@@ -19,6 +22,18 @@ class DebuggerListener(private val debugSession: XDebugSession) {
     private var algorithmDetector: AlgorithmDetector? = null
     private var detectedAlgorithm: SortAlgorithm? = null
     private var stepCallback: (() -> Unit)? = null
+
+    init {
+        // XDebugSession에 리스너 등록
+        debugSession.addSessionListener(object : XDebugSessionListener {
+            override fun sessionPaused() {
+                // 디버거가 suspend(일시정지)될 때마다 호출됨
+                if (enabled && autoCapture) {
+                    onSuspend()
+                }
+            }
+        })
+    }
 
     /**
      * 리스너 활성화 상태 확인
@@ -145,6 +160,66 @@ class DebuggerListener(private val debugSession: XDebugSession) {
         detectedAlgorithm = null
         autoCapture = false
         snapshotCollector = null
+    }
+
+    /**
+     * 디버거 suspend 이벤트 처리 (실제 스텝 이벤트)
+     */
+    private fun onSuspend() {
+        SwingUtilities.invokeLater {
+            try {
+                val stackFrame = debugSession.currentStackFrame ?: return@invokeLater
+
+                // 콜백 실행
+                stepCallback?.invoke()
+
+                // 알고리즘 감지 (아직 감지되지 않았으면)
+                if (algorithmDetector != null && detectedAlgorithm == null) {
+                    detectAlgorithmFromStackFrame(stackFrame)
+                }
+
+                // 스냅샷 수집
+                if (snapshotCollector != null && autoCapture) {
+                    captureSnapshotFromStackFrame(stackFrame)
+                }
+            } catch (e: Exception) {
+                // 에러 무시 (디버깅 중 일시적 오류 가능)
+            }
+        }
+    }
+
+    /**
+     * 스택 프레임에서 알고리즘 감지
+     */
+    private fun detectAlgorithmFromStackFrame(stackFrame: XStackFrame) {
+        try {
+            // 스택 프레임에서 메서드명 추출
+            val sourcePosition = stackFrame.sourcePosition ?: return
+            val methodName = sourcePosition.file.name.replace(".java", "")
+                .replace(".kt", "")
+                .replace("Example", "")
+                .replace("Test", "")
+
+            // 메서드명으로 알고리즘 감지
+            val result = algorithmDetector?.detectFromMethodName(methodName) ?: return
+
+            if (result.confidence > 0.5) {
+                detectedAlgorithm = result.algorithm
+            }
+        } catch (e: Exception) {
+            // 에러 무시
+        }
+    }
+
+    /**
+     * 스택 프레임에서 스냅샷 수집
+     *
+     * 참고: XStackFrame API를 통한 비동기 변수 접근은 복잡하므로
+     * 현재는 간단한 구현만 제공. 실제 배열 추출은 ExpressionEvaluator 사용 권장.
+     */
+    private fun captureSnapshotFromStackFrame(stackFrame: XStackFrame) {
+        // 간단한 더미 스냅샷 - 실제 구현은 ExpressionEvaluator 통합 필요
+        // 현재는 알고리즘 감지만 작동하고, 스냅샷은 수동 Evaluate로 수집
     }
 
     /**
