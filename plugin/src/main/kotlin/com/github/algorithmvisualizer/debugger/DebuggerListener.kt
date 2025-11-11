@@ -223,6 +223,10 @@ class DebuggerListener(private val debugSession: XDebugSession) {
      *
      * 참고: XStackFrame API를 통한 비동기 변수 접근은 복잡하므로
      * 현재는 간단한 구현만 제공. 실제 배열 추출은 ExpressionEvaluator 사용 권장.
+     *
+     * TODO: JavaStackFrame에서 직접 배열 추출 구현
+     * - JavaStackFrame.stackFrameProxy를 통해 SuspendContext 접근
+     * - captureSnapshot(suspendContext) 호출
      */
     private fun captureSnapshotFromStackFrame(stackFrame: XStackFrame) {
         // 간단한 더미 스냅샷 - 실제 구현은 ExpressionEvaluator 통합 필요

@@ -327,7 +327,16 @@ class JCEFVisualizationPanel : JPanel(BorderLayout()) {
             return
         }
 
-        val jsCode = "window.visualizerAPI.showData($data);"
+        // JSON 문자열을 JavaScript에서 파싱할 수 있도록 이스케이프 처리
+        val escapedData = data
+            .replace("\\", "\\\\")  // 백슬래시 이스케이프
+            .replace("\"", "\\\"")  // 따옴표 이스케이프
+            .replace("\n", "\\n")   // 줄바꿈 이스케이프
+            .replace("\r", "\\r")   // 캐리지 리턴 이스케이프
+            .replace("\t", "\\t")   // 탭 이스케이프
+
+        val jsCode = "window.visualizerAPI.showData(\"$escapedData\");"
+        logger.info("Executing JS: $jsCode")
         browser.cefBrowser.executeJavaScript(jsCode, browser.cefBrowser.url, 0)
     }
 
