@@ -232,44 +232,63 @@ class DebuggerListener(private val debugSession: XDebugSession) {
             // 일반적인 배열 변수명 목록
             val commonArrayNames = listOf("arr", "array", "nums", "data", "values")
 
-            // 첫 번째로 찾은 배열 변수를 평가
-            for (arrayName in commonArrayNames) {
-                evaluator.evaluateAndExtract(debugSession, arrayName)
-                    .thenAccept { (value, type) ->
-                        if (value != null && type?.contains("[]") == true) {
-                            // 배열 값 파싱 ("[1, 2, 3]" 또는 "{1, 2, 3}" 형식)
-                            try {
-                                val cleanedValue = value
-                                    .replace("[", "")
-                                    .replace("]", "")
-                                    .replace("{", "")
-                                    .replace("}", "")
-
-                                val arrayValues = cleanedValue
-                                    .split(",")
-                                    .map { it.trim().toIntOrNull() }
-                                    .filterNotNull()
-                                    .toIntArray()
-
-                                if (arrayValues.isNotEmpty()) {
-                                    snapshotCollector?.captureSnapshot(arrayValues)
-                                }
-                            } catch (e: Exception) {
-                                // 파싱 실패는 무시
-                            }
-                        }
-                    }
-                    .exceptionally {
-                        // 평가 실패는 무시하고 다음 변수명 시도
-                        null
-                    }
-
-                // 첫 번째 성공한 변수로 종료
-                break
-            }
+            // 각 변수명을 순차적으로 시도
+            tryEvaluateArrayVariable(evaluator, commonArrayNames, 0)
         } catch (e: Exception) {
             // ExpressionEvaluator 사용 실패 시 무시
         }
+    }
+
+    /**
+     * 배열 변수를 순차적으로 평가 (재귀적으로 시도)
+     */
+    private fun tryEvaluateArrayVariable(evaluator: ExpressionEvaluator, arrayNames: List<String>, index: Int) {
+        if (index >= arrayNames.size) {
+            return // 모든 변수명 시도 완료
+        }
+
+        val arrayName = arrayNames[index]
+        evaluator.evaluateAndExtract(debugSession, arrayName)
+            .thenAccept { (value, type) ->
+                if (value != null && type?.contains("[]") == true) {
+                    // 배열 값 파싱 ("[1, 2, 3]" 또는 "{1, 2, 3}" 형식)
+                    try {
+                        val cleanedValue = value
+                            .replace("[", "")
+                            .replace("]", "")
+                            .replace("{", "")
+                            .replace("}", "")
+
+                        val arrayValues = cleanedValue
+                            .split(",")
+                            .map { it.trim().toIntOrNull() }
+                            .filterNotNull()
+                            .toIntArray()
+
+                        if (arrayValues.isNotEmpty()) {
+                            snapshotCollector?.captureSnapshot(arrayValues)
+
+                            // 스냅샷이 수집되었으므로 콜백 호출 (시각화 트리거)
+                            SwingUtilities.invokeLater {
+                                stepCallback?.invoke()
+                            }
+
+                            // 성공했으므로 더 이상 시도하지 않음
+                            return@thenAccept
+                        }
+                    } catch (e: Exception) {
+                        // 파싱 실패는 무시하고 다음 변수명 시도
+                    }
+                }
+
+                // 평가 실패 또는 배열이 아닌 경우 다음 변수명 시도
+                tryEvaluateArrayVariable(evaluator, arrayNames, index + 1)
+            }
+            .exceptionally {
+                // 평가 실패 시 다음 변수명 시도
+                tryEvaluateArrayVariable(evaluator, arrayNames, index + 1)
+                null
+            }
     }
 
     /**
