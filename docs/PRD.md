@@ -1,9 +1,10 @@
 # 제품 요구사항 정의서 (PRD)
-# Algorithm Debug Visualizer for JetBrains IDEs
+# Debug Visualizer for JetBrains IDEs
 
-**버전**: 1.0.0
-**작성일**: 2024-11-10
-**상태**: 초안
+**버전**: 2.0.0
+**작성일**: 2025-01-12
+**상태**: 재정의 (VSCode Debug Visualizer 기반)
+**참고**: [VSCode Debug Visualizer](https://github.com/hediet/vscode-debug-visualizer)
 
 ---
 
@@ -11,578 +12,771 @@
 
 ### 1.1 제품 비전
 
-Algorithm Debug Visualizer는 JetBrains IDE 사용자들이 알고리즘과 데이터 구조를 **시각적으로 이해**하고 디버깅할 수 있도록 돕는 혁신적인 플러그인입니다. 복잡한 알고리즘의 실행 과정을 실시간으로 시각화하여, 학습과 개발 생산성을 극대화합니다.
+**Debug Visualizer for JetBrains IDEs**는 VSCode Debug Visualizer에서 영감을 받아, JetBrains 생태계에 동일한 수준의 디버깅 시각화 경험을 제공하는 플러그인입니다.
 
-### 1.2 목표
+**핵심 개념:**
+> "A visual watch window that lets you visualize your data structures while debugging"
 
-- **학습 효율성 향상**: 알고리즘 학습자가 코드 실행 과정을 직관적으로 이해
-- **디버깅 생산성 향상**: 복잡한 데이터 구조의 상태를 빠르게 파악
-- **교육 지원**: 교육자가 알고리즘을 효과적으로 설명할 수 있는 도구 제공
-- **생태계 확장**: JetBrains 생태계에 VSCode Debug Visualizer 수준의 도구 제공
+기존 Watch 창의 텍스트 기반 표시를 넘어, **F8 스텝마다 자동으로 업데이트되는 실시간 시각화**를 제공합니다.
 
-### 1.3 성공 지표
+### 1.2 VSCode Debug Visualizer와의 차이점
 
-| 지표 | 목표 | 측정 방법 |
-|------|------|-----------|
-| 다운로드 수 | 첫 6개월 내 10,000+ | JetBrains Marketplace |
-| 활성 사용자 | 월 1,000+ | 텔레메트리 (옵트인) |
-| 사용자 평점 | 4.0+ / 5.0 | JetBrains Marketplace |
-| 커뮤니티 기여 | 5+ 외부 기여자 | GitHub Contributors |
-| 버그 해결률 | Critical 버그 48시간 이내 | GitHub Issues |
+| 특징 | VSCode Debug Visualizer | JetBrains Debug Visualizer |
+|------|------------------------|---------------------------|
+| 플랫폼 | Visual Studio Code | IntelliJ IDEA, PyCharm, WebStorm, CLion 등 |
+| 디버거 API | DAP (Debug Adapter Protocol) | XDebugger API + JDI |
+| 데이터 추출 (JS) | 런타임 코드 주입 | JDI 직접 사용 |
+| 데이터 추출 (Java) | DAP 변수 참조 탐색 | JDI 네이티브 접근 (더 강력) |
+| 웹뷰 | Electron WebView | JCEF (Chromium Embedded Framework) |
+| 시각화 라이브러리 | 동일 (D3.js, Plotly, vis.js 등) | 동일 |
+
+### 1.3 핵심 원칙
+
+**1. 실시간 모니터링 우선**
+- ❌ "Play" 버튼으로 애니메이션 재생
+- ✅ F8 스텝마다 즉시 UI 업데이트
+
+**2. 브레이크포인트 위치 무관**
+- ❌ 특정 알고리즘 메서드에서만 동작
+- ✅ Variables 패널에 보이는 모든 변수 시각화 가능
+
+**3. 자료구조 중립적**
+- ❌ 정렬 알고리즘만 지원
+- ✅ 배열, 트리, 그래프, 스택, 큐, 맵 등 모든 자료구조
+
+**4. 타입 자동 감지**
+- ❌ 사용자가 시각화 타입 수동 선택
+- ✅ 데이터 구조를 분석하여 자동으로 최적 시각화 선택
+
+**5. 다중 언어 지원**
+- ✅ Java, Kotlin, Python, JavaScript, TypeScript, C++, C#, Go, Rust 등
 
 ---
 
-## 2. 사용자 페르소나
+## 2. 핵심 기능
 
-### 페르소나 1: 알고리즘 학습자 "지민"
+### 2.1 시각화 타입 (13종)
 
-- **나이**: 23세, 컴퓨터과학 전공 대학생
-- **목표**: 코딩 테스트 준비, 알고리즘 개념 이해
-- **고충**:
-  - 트리 순회 같은 재귀 알고리즘이 어떻게 동작하는지 이해 어려움
-  - 디버거로 한 줄씩 따라가도 전체 흐름 파악 힘듦
-  - DP 테이블이 어떻게 채워지는지 시각적으로 보고 싶음
-- **니즈**: 실행 과정을 애니메이션으로 보고 싶음
+VSCode Debug Visualizer와 동일한 시각화 타입 지원:
 
-### 페르소나 2: 백엔드 엔지니어 "서연"
+| 타입 | 설명 | 사용 예시 |
+|------|------|-----------|
+| **graph** | 노드-엣지 그래프 | 그래프 알고리즘 (DFS, BFS, Dijkstra) |
+| **tree** | 계층적 트리 | 이진 트리, AVL, Red-Black Tree |
+| **array** | 1D 배열 막대 그래프 | 정렬 알고리즘, 투 포인터 |
+| **table** | 2D 테이블 | DP 테이블, 행렬 |
+| **grid** | 2D 그리드 | 체스판, 미로, 2D 게임 |
+| **plotly** | Plotly.js 차트 | 통계, 시계열 데이터 |
+| **text** | 포맷된 텍스트 | JSON, XML, 로그 |
+| **monacoText** | 코드 에디터 | 소스 코드, Diff |
+| **image** | 이미지 (PNG base64) | 이미지 처리 알고리즘 |
+| **svg** | SVG | 벡터 그래픽 |
+| **graphviz-dot** | Graphviz DOT | 복잡한 그래프 |
+| **ast** | 추상 구문 트리 | 컴파일러, 파서 |
+| **object-graph** | 객체 참조 그래프 | 메모리 구조, 포인터 관계 |
 
-- **나이**: 29세, 5년차 백엔드 개발자
-- **목표**: 복잡한 비즈니스 로직 디버깅, 성능 최적화
-- **고충**:
-  - 복잡한 그래프 구조의 상태를 디버거에서 추적하기 어려움
-  - 대용량 배열의 변화 패턴을 빠르게 파악하고 싶음
-  - 중첩된 자료구조를 텍스트로 보는 것이 비효율적
-- **니즈**: 실시간으로 데이터 구조의 변화를 시각적으로 추적
+### 2.2 실시간 모니터링 워크플로우
 
-### 페르소나 3: 알고리즘 강사 "현수"
+```
+1. 사용자가 디버깅 세션 시작 (중단점 설정)
+   ↓
+2. Debug Visualizer 툴 윈도우 열기
+   - Command: "Debug Visualizer: New View"
+   - 또는 단축키: Ctrl+Shift+V (예정)
+   ↓
+3. 표현식 입력
+   - 예: myTree
+   - 예: graph.adjacencyList
+   - 예: dpTable
+   ↓
+4. 디버거가 중단점에서 멈춤
+   ↓
+5. 자동으로 표현식 평가 및 시각화 렌더링
+   ↓
+6. 사용자가 F8 (Step Over) 실행
+   ↓
+7. 즉시 표현식 재평가 → 시각화 자동 업데이트
+   ↓
+8. 변경된 부분 하이라이트 (diff)
+   ↓
+9. 반복 (디버깅 세션 종료까지)
+```
 
-- **나이**: 35세, 알고리즘 온라인 강의 진행
-- **목표**: 학생들에게 알고리즘을 효과적으로 설명
-- **고충**:
-  - 파워포인트나 화이트보드만으로는 동적인 과정 설명 한계
-  - 실제 코드 실행을 라이브로 보여주고 싶지만 디버거는 교육용으로 부적합
-  - 각 단계를 천천히 보여주며 설명하고 싶음
-- **니즈**: 코드 실행을 단계별로 보여주며 설명할 수 있는 도구
+### 2.3 데이터 추출 방식 (언어별)
+
+#### **Tier 1: 완전 지원 (JavaScript/TypeScript)**
+- **방식**: 런타임 코드 주입
+- **구현**: VSCode와 동일하게 Data Extractor API 주입
+- **추출기**: 13개 기본 추출기 자동 등록
+- **사용자 정의**: Custom Extractor 지원
+
+```javascript
+// 사용자 코드에 자동으로 주입되는 API
+class MyTree {
+  getVisualizationData() {
+    return {
+      kind: { tree: true },
+      root: {
+        id: String(this.value),
+        label: String(this.value),
+        children: this.children.map(c => c.getVisualizationData().root)
+      }
+    };
+  }
+}
+```
+
+#### **Tier 1: 완전 지원 (Java/Kotlin)**
+- **방식**: JDI (Java Debug Interface) 직접 사용
+- **장점**: VSCode보다 더 강력한 제어 (네이티브 접근)
+- **구현**: 현재 Phase 1 완료
+- **추출기**: 리플렉션 기반 자동 타입 감지
+
+```kotlin
+// ExpressionEvaluator + JdiValueConverter
+val jdiValue = debugSession.evaluate("myTree")
+val visualization = when (jdiValue.type().name()) {
+    "TreeNode" -> convertToTreeVisualization(jdiValue)
+    "int[]" -> convertToArrayVisualization(jdiValue)
+    "HashMap" -> convertToTableVisualization(jdiValue)
+    else -> convertToObjectGraph(jdiValue)
+}
+```
+
+#### **Tier 2: 기본 지원 (Python)**
+- **방식**: 외부 모듈 (`pydebugvisualizer` - 예정)
+- **구현**: debugpy 프로토콜 연동
+- **사용자 요구**: `pip install pydebugvisualizer`
+
+```python
+# 사용자 코드
+class TreeNode:
+    def get_visualization_data(self):
+        return {
+            "kind": {"tree": True},
+            "root": {
+                "id": str(id(self)),
+                "label": str(self.value),
+                "children": [c.get_visualization_data()["root"] for c in self.children]
+            }
+        }
+
+# 디버거에서
+# visualize(myTree) → JSON 반환
+```
+
+#### **Tier 3: 범용 지원 (C++, C#, Go, Rust 등)**
+- **방식**: XDebugger API 변수 참조 재귀 탐색
+- **제한**: 최대 50개 노드
+- **구현**: GenericVisualizationBackend
+
+```kotlin
+// 모든 언어에 적용 가능한 범용 방식
+fun constructObjectGraph(expression: String): VisualizationData {
+    val rootValue = debugSession.evaluate(expression)
+    val nodes = mutableListOf<GraphNode>()
+    val edges = mutableListOf<GraphEdge>()
+
+    // BFS로 변수 참조 탐색
+    val queue = ArrayDeque<XValue>()
+    queue.add(rootValue)
+
+    while (queue.isNotEmpty() && nodes.size < 50) {
+        val value = queue.removeFirst()
+        val children = value.computeChildren() // XDebugger API
+
+        children.forEach { child ->
+            nodes.add(GraphNode(child.name, child.value))
+            edges.add(GraphEdge(value.name, child.name))
+            queue.add(child)
+        }
+    }
+
+    return VisualizationData(kind = "graph", nodes, edges)
+}
+```
+
+### 2.4 우선순위 기반 추출기 시스템
+
+VSCode Debug Visualizer의 핵심 메커니즘:
+
+```kotlin
+interface DataExtractor {
+    val id: String
+    val priority: Int // 높을수록 우선
+
+    fun canExtract(value: Any): Boolean
+    fun extract(value: Any): VisualizationData
+}
+
+// 기본 추출기 등록 (우선순위 순)
+val extractors = listOf(
+    GetVisualizationDataExtractor(priority = 600),  // .getVisualizationData() 메서드
+    TreeExtractor(priority = 550),                  // TreeNode 타입
+    GraphExtractor(priority = 540),                 // Graph 타입
+    ArrayExtractor(priority = 500),                 // 배열
+    MapExtractor(priority = 490),                   // Map, HashMap
+    ListExtractor(priority = 480),                  // List, ArrayList
+    ObjectGraphExtractor(priority = 98),            // 일반 객체 (낮은 우선순위)
+    ToStringExtractor(priority = 50)                // 마지막 fallback
+)
+
+// 추출 로직
+fun extractVisualizationData(value: Any): VisualizationData {
+    val applicableExtractors = extractors
+        .filter { it.canExtract(value) }
+        .sortedByDescending { it.priority }
+
+    return applicableExtractors.first().extract(value)
+}
+```
 
 ---
 
 ## 3. 기능 요구사항
 
-### 3.1 핵심 기능 (MVP)
+### 3.1 MVP (Phase 1) ✅ **완료**
 
-#### F1. 디버거 통합
-**우선순위**: P0 (필수)
-**설명**: JetBrains IDE 디버거와 긴밀하게 통합되어 디버깅 세션 중 데이터 시각화
+#### F1. JDI 기반 값 추출 ✅
+- [x] ExpressionEvaluator 구현
+- [x] JdiValueConverter 구현
+- [x] 모든 프리미티브 타입 (int, long, float, double, boolean, char, byte, short)
+- [x] 문자열 및 배열 (중첩 배열 포함)
+- [x] null 값 처리
+- [x] 타임아웃 처리 (5초)
+- [x] 35개 단위 테스트 (100% 성공)
 
-**요구사항**:
-- [ ] 디버거 중단점에서 자동으로 활성화
-- [ ] 현재 스택 프레임의 변수에 접근
-- [ ] 표현식 평가 (예: `myTree.root`)
-- [ ] 스텝 실행 시 자동 업데이트
+#### F2. JCEF 웹뷰 통합 ✅
+- [x] JBCefBrowser 초기화
+- [x] React UI 번들링 (Vite)
+- [x] 인라인 HTML/CSS/JS 로딩
+- [x] JavaScript ↔ Kotlin 브리지 (`window.visualizerAPI`)
+- [x] Fallback HTML 지원
 
-**수용 기준**:
-- 디버거 중단 시 1초 이내 시각화 표시
-- 표현식 평가 성공률 95% 이상
-- 스텝 실행 시 즉시 반영
+#### F3. React UI 기본 시각화 ✅
+- [x] React 18.2 + TypeScript
+- [x] D3.js 기반 배열 막대 그래프
+- [x] Vitest + React Testing Library (10개 테스트)
+- [x] 인터랙티브 마우스 오버
+- [x] Viridis 색상 그라디언트
 
-#### F2. 기본 시각화 타입
-**우선순위**: P0 (필수)
-**설명**: 가장 많이 사용되는 데이터 구조의 시각화
+#### F4. 툴 윈도우 ✅
+- [x] VisualizerToolWindowFactory
+- [x] 표현식 입력 필드
+- [x] Evaluate 버튼
+- [x] 시각화 영역 (JCEF 패널)
 
-**요구사항**:
-- [ ] 배열 시각화 (막대 그래프, 인덱스 표시)
-- [ ] 이진 트리 시각화 (계층적 레이아웃)
-- [ ] 그래프 시각화 (노드-엣지 다이어그램)
-- [ ] 테이블 시각화 (2D 배열, DP 테이블)
+### 3.2 Phase 2: 실시간 모니터링 시스템 (현재 진행 중)
 
-**수용 기준**:
-- 각 타입별 1000개 요소까지 1초 이내 렌더링
-- 모바일 반응형 지원 불필요 (IDE 환경)
-- 줌/팬 인터랙션 지원
+#### F5. 디버거 이벤트 추적
+- [ ] XDebugSessionListener 구현
+  - [ ] `sessionPaused()` - F8 스텝 감지
+  - [ ] `sessionResumed()` - 실행 재개
+  - [ ] `stackFrameChanged()` - 스택 프레임 변경
+- [ ] 활성 스택 프레임 ID 추적
+- [ ] 표현식 자동 재평가
 
-#### F3. 언어 지원 (Tier 1)
-**우선순위**: P0 (필수)
-**설명**: 자동 데이터 추출을 지원하는 주요 언어
-
-**요구사항**:
-- [ ] Java: JDI를 통한 객체 필드 접근
-- [ ] Kotlin: Java와 동일한 메커니즘
-- [ ] Python: debugpy 프로토콜 연동
-- [ ] JavaScript/TypeScript: Chrome DevTools 프로토콜
-
-**수용 기준**:
-- 각 언어에서 기본 자료구조 (배열, 리스트, 맵) 자동 감지
-- 커스텀 클래스 (TreeNode, Graph 등) 지원
-- 타입 감지 정확도 90% 이상
-
-#### F4. 도구 윈도우
-**우선순위**: P0 (필수)
-**설명**: IDE 내 전용 도구 윈도우에서 시각화 표시
-
-**요구사항**:
-- [ ] IDE 하단 또는 측면에 도킹 가능
-- [ ] 표현식 입력 필드
-- [ ] 시각화 렌더링 영역
-- [ ] 컨트롤 패널 (새로고침, 설정 등)
-
-**수용 기준**:
-- IDE 기본 테마와 일관된 UI
-- 창 크기 조절 시 시각화 자동 리사이즈
-- 다중 탭 지원 (여러 시각화 동시 열기)
-
-### 3.2 고급 기능 (Post-MVP)
-
-#### F5. 알고리즘별 최적화 시각화
-**우선순위**: P1 (중요)
-**설명**: 특정 알고리즘에 특화된 시각화 제공
-
-**요구사항**:
-- [ ] 정렬 알고리즘: 비교/교환 하이라이트
-- [ ] 그래프 탐색: 방문 순서, 경로 표시
-- [ ] DP: 셀 채워지는 순서, 의존성 표시
-- [ ] 백트래킹: 결정 트리, 가지치기 표시
-
-#### F6. 애니메이션 재생
-**우선순위**: P1 (중요)
-**설명**: 알고리즘 실행 과정을 단계별로 재생
-
-**요구사항**:
-- [ ] 실행 히스토리 기록
-- [ ] 재생/일시정지/이전/다음 컨트롤
-- [ ] 재생 속도 조절 (0.5x ~ 2x)
-- [ ] 특정 단계로 점프
-
-#### F7. 커스텀 시각화 API
-**우선순위**: P2 (선택)
-**설명**: 사용자가 자신의 데이터 구조에 대한 시각화 정의
-
-**요구사항**:
-- [ ] Extension Point 제공
-- [ ] JSON 스키마 기반 정의
-- [ ] 샘플 커스텀 시각화 제공
-- [ ] 문서 및 튜토리얼
-
-#### F8. 내보내기
-**우선순위**: P2 (선택)
-**설명**: 시각화를 이미지/비디오로 저장
-
-**요구사항**:
-- [ ] PNG/SVG 이미지 내보내기
-- [ ] 애니메이션 GIF 생성
-- [ ] 클립보드 복사
-- [ ] 보고서용 HTML 생성
-
-### 3.3 기능 우선순위 매트릭스
-
-| 기능 | 사용자 가치 | 개발 난이도 | 우선순위 |
-|------|------------|------------|---------|
-| F1. 디버거 통합 | 높음 | 높음 | P0 |
-| F2. 기본 시각화 | 높음 | 중간 | P0 |
-| F3. 언어 지원 | 높음 | 높음 | P0 |
-| F4. 도구 윈도우 | 높음 | 낮음 | P0 |
-| F5. 알고리즘 최적화 | 중간 | 중간 | P1 |
-| F6. 애니메이션 | 중간 | 높음 | P1 |
-| F7. 커스텀 API | 낮음 | 중간 | P2 |
-| F8. 내보내기 | 낮음 | 낮음 | P2 |
-
----
-
-## 4. 비기능 요구사항
-
-### 4.1 성능
-
-| 요구사항 | 목표 | 측정 방법 |
-|---------|------|-----------|
-| 시각화 렌더링 시간 | < 1초 (1000개 요소) | 성능 벤치마크 |
-| 메모리 사용량 | < 200MB | Profiler |
-| IDE 반응성 영향 | < 5% | 벤치마크 비교 |
-| 디버거 스텝 지연 | < 100ms | 타이머 측정 |
-
-### 4.2 사용성
-
-- **학습 곡선**: 첫 사용 후 5분 내 기본 기능 사용 가능
-- **오류 메시지**: 명확하고 해결 방법 제시
-- **문서**: 각 시각화 타입별 예제 제공
-- **접근성**: 키보드 네비게이션 지원
-
-### 4.3 호환성
-
-| 카테고리 | 요구사항 |
-|---------|---------|
-| IDE 버전 | IntelliJ IDEA 2023.1+ |
-| JDK | 17+ |
-| OS | Windows 10+, macOS 11+, Linux (Ubuntu 20.04+) |
-| 화면 해상도 | 최소 1280x720 |
-
-### 4.4 확장성
-
-- **새로운 시각화 타입**: 플러그인 아키텍처로 쉽게 추가
-- **새로운 언어**: Extension Point로 지원 추가
-- **커스터마이징**: 테마, 레이아웃 설정 가능
-
-### 4.5 보안
-
-- **코드 실행**: 디버거 컨텍스트 내에서만 실행, 임의 코드 실행 불가
-- **데이터 전송**: 로컬에서만 동작, 외부 서버 전송 없음
-- **텔레메트리**: 옵트인 방식, 개인정보 미수집
-
-### 4.6 안정성
-
-- **크래시율**: < 0.1% (세션당)
-- **오류 복구**: 시각화 오류 시 IDE 전체 영향 없음
-- **버그 심각도**: Critical 버그 0개 유지
-
----
-
-## 5. 사용자 스토리
-
-### 5.1 학습자 스토리
-
-**US-1**: 트리 순회 이해하기
-```
-As a 알고리즘 학습자
-I want to 이진 트리의 중위 순회 과정을 시각적으로 보고 싶다
-So that 재귀 호출 순서를 직관적으로 이해할 수 있다
-
-수용 기준:
-- 중단점을 설정하고 스텝 실행 시 현재 방문 노드가 하이라이트됨
-- 방문 순서가 숫자로 표시됨
-- 스택 프레임이 트리와 함께 표시됨
+#### F6. 실시간 업데이트 파이프라인
+```kotlin
+// 목표 아키텍처
+XDebugSession.sessionPaused()
+  ↓
+DebuggerListener.onSuspend()
+  ↓
+VisualizationWatchModel.refresh()
+  ↓
+VisualizationBackend.getVisualizationData(expression)
+  ↓
+extractors.selectBestExtractor(value).extract()
+  ↓
+JSON 변환
+  ↓
+JCEFVisualizationPanel.showVisualization(json)
+  ↓
+window.visualizerAPI.updateVisualization(data)
+  ↓
+React 리렌더링 (< 100ms)
 ```
 
-**US-2**: DP 테이블 채워지는 과정 보기
-```
-As a 알고리즘 학습자
-I want to DP 테이블이 어떤 순서로 채워지는지 보고 싶다
-So that 점화식의 동작 원리를 이해할 수 있다
+- [ ] Observable 상태 관리 (MobX 또는 Kotlin Flow)
+- [ ] 취소 토큰 (이전 요청 취소)
+- [ ] 디바운싱 (에러 후 330ms 대기)
+- [ ] WebSocket 또는 JCEF 브리지로 실시간 전송
 
-수용 기준:
-- 2D 테이블로 dp 배열 표시
-- 각 셀의 값과 색상으로 계산 여부 표시
-- 현재 계산 중인 셀 하이라이트
-```
+#### F7. 다중 시각화 타입 지원
+- [ ] **graph**: vis.js 기반 그래프 렌더러
+- [ ] **tree**: SVG 기반 트리 렌더러
+- [ ] **table**: Perspective.js 테이블
+- [ ] **plotly**: Plotly.js 차트
+- [ ] **grid**: HTML 그리드
+- [ ] **text**: Monaco Editor (코드)
 
-### 5.2 개발자 스토리
+#### F8. 타입 자동 감지 시스템
+```kotlin
+// 우선순위 기반 추출기
+interface VisualizationBackend {
+    fun getVisualizationData(expression: String): VisualizationData
+}
 
-**US-3**: 그래프 알고리즘 디버깅
-```
-As a 백엔드 엔지니어
-I want to 다익스트라 알고리즘 실행 중 그래프 상태를 보고 싶다
-So that 버그를 빠르게 찾을 수 있다
+class DispatchingVisualizationBackend(
+    private val backends: List<VisualizationBackend>
+) {
+    fun getVisualizationData(expression: String): VisualizationData {
+        // 언어별 백엔드 선택
+        val backend = when (currentLanguage) {
+            "Java", "Kotlin" -> jvmBackend
+            "JavaScript", "TypeScript" -> jsBackend
+            "Python" -> pythonBackend
+            else -> genericBackend
+        }
 
-수용 기준:
-- 노드와 엣지가 그래프로 표시됨
-- 현재 탐색 중인 노드가 색상으로 구분됨
-- 각 노드의 거리 값이 표시됨
-- 확정된 경로가 강조됨
-```
-
-**US-4**: 복잡한 배열 상태 확인
-```
-As a 백엔드 엔지니어
-I want to 정렬 알고리즘 실행 중 배열 상태를 막대 그래프로 보고 싶다
-So that 비교/교환 과정을 시각적으로 추적할 수 있다
-
-수용 기준:
-- 배열 요소가 막대 그래프로 표시됨
-- 현재 비교 중인 요소가 하이라이트됨
-- 포인터 위치가 표시됨
-```
-
-### 5.3 교육자 스토리
-
-**US-5**: 강의 중 알고리즘 시연
-```
-As a 알고리즘 강사
-I want to 학생들에게 BFS 알고리즘을 단계별로 시연하고 싶다
-So that 알고리즘 동작 원리를 효과적으로 설명할 수 있다
-
-수용 기준:
-- 실행 히스토리를 저장하여 앞뒤로 이동 가능
-- 재생 속도 조절 가능
-- 특정 단계에서 일시정지하고 설명 가능
-- 시각화를 이미지로 내보내기 가능
-```
-
----
-
-## 6. 기술 요구사항
-
-### 6.1 기술 스택
-
-**플러그인:**
-- Kotlin (언어)
-- IntelliJ Platform SDK 2023.1+ (프레임워크)
-- Gradle 8.0+ (빌드)
-- JUnit 5 (테스트)
-
-**UI:**
-- TypeScript (언어)
-- React 18+ (프레임워크)
-- D3.js 7+ (그래프/트리 시각화)
-- Plotly.js (차트)
-- Cytoscape.js (복잡한 네트워크)
-- Vite (번들러)
-- Jest + React Testing Library (테스트)
-
-**통신:**
-- JCEF (Java Chromium Embedded Framework)
-- CEF JavaScript Bridge
-
-### 6.2 아키텍처 제약사항
-
-- **플러그인 격리**: 플러그인 오류가 IDE 전체에 영향을 주지 않도록 격리
-- **스레드 안전**: 디버거 이벤트는 별도 스레드에서 처리
-- **메모리 제한**: 시각화 데이터는 WeakReference 사용하여 메모리 누수 방지
-- **샌드박스**: WebView는 격리된 컨텍스트에서 실행
-
-### 6.3 데이터 스키마
-
-시각화 데이터는 JSON 형식으로 정의:
-```json
-{
-  "kind": "graph" | "tree" | "array" | "table" | "plotly" | "grid",
-  "timestamp": 1234567890,
-  "metadata": {
-    "language": "java",
-    "expression": "myTree",
-    "type": "TreeNode"
-  },
-  "data": { /* kind별 데이터 */ },
-  "config": { /* 시각화 설정 */ }
+        return backend.getVisualizationData(expression)
+    }
 }
 ```
 
-상세 스키마: `docs/visualization-schema.md` 참조
+- [ ] JvmVisualizationBackend (현재 구현 완료)
+- [ ] JsVisualizationBackend (Phase 3)
+- [ ] PythonVisualizationBackend (Phase 3)
+- [ ] GenericVisualizationBackend (모든 언어)
 
----
+### 3.3 Phase 3: 다중 언어 지원
 
-## 7. 사용자 인터페이스
+#### F9. JavaScript/TypeScript 완전 지원
+- [ ] Chrome DevTools Protocol 연동
+- [ ] 런타임 코드 주입 메커니즘
+- [ ] Data Extractor API 번들 생성
+- [ ] 13개 기본 추출기 포팅
 
-### 7.1 주요 화면
+#### F10. Python 기본 지원
+- [ ] debugpy 프로토콜 연동
+- [ ] `pydebugvisualizer` 모듈 개발
+- [ ] PyPI 배포
 
-#### 도구 윈도우
+#### F11. 범용 언어 지원 (C++, C#, Go, Rust)
+- [ ] XDebugger 변수 참조 재귀 탐색
+- [ ] 객체 그래프 자동 생성
+- [ ] 최대 50개 노드 제한
+
+### 3.4 Phase 4: 고급 기능
+
+#### F12. 사용자 정의 추출기
+- [ ] Extension Point 제공
+- [ ] Kotlin DSL로 추출기 정의
+- [ ] 우선순위 설정 가능
+
+```kotlin
+// 사용자 정의 추출기 예시
+class MyCustomExtractor : DataExtractor {
+    override val id = "my-custom-tree"
+    override val priority = 700 // 기본 TreeExtractor보다 높음
+
+    override fun canExtract(value: Any) =
+        value.javaClass.name == "com.example.MyTree"
+
+    override fun extract(value: Any): VisualizationData {
+        val tree = value as MyTree
+        return VisualizationData(
+            kind = "tree",
+            root = TreeNode(
+                id = tree.id.toString(),
+                label = tree.label,
+                children = tree.children.map { extract(it).root }
+            )
+        )
+    }
+}
 ```
-┌─────────────────────────────────────────────┐
-│ Algorithm Visualizer                    [⚙️][✕]│
-├─────────────────────────────────────────────┤
-│ Expression: myTree.root            [▶️ Eval] │
-├─────────────────────────────────────────────┤
-│                                             │
-│         [Visualization Area]                │
-│                                             │
-│          🌳 Tree Visualization              │
-│                                             │
-│               10                            │
-│              /  \                           │
-│             5    15                         │
-│            / \   / \                        │
-│           3   7 12  20                      │
-│                                             │
-├─────────────────────────────────────────────┤
-│ [⬅️][▶️][⏸️] Speed: 1x  [Export] [Settings]  │
-└─────────────────────────────────────────────┘
+
+#### F13. 실행 히스토리 (Time-Travel Debugging)
+- [ ] 모든 스텝의 스냅샷 저장
+- [ ] 이전/다음 버튼으로 탐색
+- [ ] 슬라이더로 특정 시점 점프
+
+#### F14. 내보내기
+- [ ] PNG/SVG 이미지
+- [ ] 애니메이션 GIF
+- [ ] HTML 리포트
+
+---
+
+## 4. 데이터 스키마
+
+VSCode Debug Visualizer와 **100% 호환**되는 JSON 스키마 사용:
+
+```typescript
+// 공통 구조
+interface VisualizationData {
+  kind: {
+    [key: string]: true; // discriminated union
+  };
+  // kind별 추가 필드
+}
+
+// 1. Graph
+interface GraphVisualizationData {
+  kind: { graph: true };
+  nodes: Array<{
+    id: string;
+    label?: string;
+    color?: string;
+    shape?: "box" | "circle" | "ellipse";
+  }>;
+  edges: Array<{
+    from: string;
+    to: string;
+    label?: string;
+    color?: string;
+    dashes?: boolean;
+  }>;
+}
+
+// 2. Tree
+interface TreeVisualizationData {
+  kind: { tree: true };
+  root: TreeNode;
+}
+
+interface TreeNode {
+  id: string;
+  label: string;
+  children?: TreeNode[];
+  color?: string;
+  isMarked?: boolean;
+}
+
+// 3. Array
+interface ArrayVisualizationData {
+  kind: { array: true };
+  items: Array<{
+    value: number;
+    label?: string;
+    color?: string;
+    isHighlighted?: boolean;
+  }>;
+}
+
+// 4. Table
+interface TableVisualizationData {
+  kind: { table: true };
+  rows: Array<{ [key: string]: any }>;
+  columns?: Array<{ key: string; label: string }>;
+}
+
+// 5. Plotly
+interface PlotlyVisualizationData {
+  kind: { plotly: true };
+  data: any[]; // Plotly.js data
+  layout?: any; // Plotly.js layout
+}
+
+// ... 나머지 8개 타입
 ```
 
-### 7.2 인터랙션 플로우
-
-1. **초기 설정**
-   - 사용자가 JetBrains IDE 설치
-   - Marketplace에서 "Algorithm Visualizer" 검색 및 설치
-   - IDE 재시작
-
-2. **디버깅 시작**
-   - 사용자가 코드에 중단점 설정
-   - 디버그 모드로 실행
-   - 중단점에 도달
-
-3. **시각화 표시**
-   - 도구 윈도우 자동 활성화
-   - 표현식 입력 필드에 변수명 입력 (예: `myTree`)
-   - "Eval" 버튼 클릭 또는 Enter
-   - 시각화 자동 렌더링
-
-4. **스테핑 및 업데이트**
-   - 사용자가 "Step Over" 실행
-   - 시각화 자동 업데이트
-   - 변경된 부분 하이라이트
-
-### 7.3 와이어프레임
-
-상세 와이어프레임은 Figma 링크 참조: (TBD)
+**참고**: [VSCode Debug Visualizer JSON Schema](https://hediet.github.io/visualization/docs/visualization-data-schema.json)
 
 ---
 
-## 8. 제약사항 및 가정
+## 5. 아키텍처
 
-### 8.1 제약사항
+### 5.1 시스템 컴포넌트
 
-1. **플랫폼 제약**
-   - JetBrains IDE에서만 동작 (VSCode, Eclipse 지원 안 함)
-   - JCEF를 지원하는 IDE 버전만 사용 가능
+```
+┌─────────────────────────────────────────────────────┐
+│                JetBrains IDE                        │
+│                                                     │
+│  ┌──────────────────────────────────────────────┐  │
+│  │ Debug Visualizer Plugin (Kotlin)             │  │
+│  │                                              │  │
+│  │  ┌────────────────────────────────────────┐ │  │
+│  │  │ VisualizerToolWindow                   │ │  │
+│  │  │  - Expression Input Field              │ │  │
+│  │  │  - JCEF WebView Container             │ │  │
+│  │  └────────────────────────────────────────┘ │  │
+│  │                                              │  │
+│  │  ┌────────────────────────────────────────┐ │  │
+│  │  │ DebuggerListener                       │ │  │
+│  │  │  - XDebugSessionListener               │ │  │
+│  │  │  - onSuspend() → refresh()            │ │  │
+│  │  └────────────────────────────────────────┘ │  │
+│  │                                              │  │
+│  │  ┌────────────────────────────────────────┐ │  │
+│  │  │ VisualizationBackend (Dispatcher)      │ │  │
+│  │  │                                        │ │  │
+│  │  │  ┌──────────────────────────────────┐ │ │  │
+│  │  │  │ JvmVisualizationBackend          │ │ │  │
+│  │  │  │  - ExpressionEvaluator           │ │ │  │
+│  │  │  │  - JdiValueConverter             │ │ │  │
+│  │  │  │  - TreeExtractor                 │ │ │  │
+│  │  │  │  - GraphExtractor                │ │ │  │
+│  │  │  │  - ArrayExtractor                │ │ │  │
+│  │  │  └──────────────────────────────────┘ │ │  │
+│  │  │                                        │ │  │
+│  │  │  ┌──────────────────────────────────┐ │ │  │
+│  │  │  │ JsVisualizationBackend (Phase 3) │ │ │  │
+│  │  │  └──────────────────────────────────┘ │ │  │
+│  │  │                                        │ │  │
+│  │  │  ┌──────────────────────────────────┐ │ │  │
+│  │  │  │ PythonVisualizationBackend       │ │ │  │
+│  │  │  └──────────────────────────────────┘ │ │  │
+│  │  │                                        │ │  │
+│  │  │  ┌──────────────────────────────────┐ │ │  │
+│  │  │  │ GenericVisualizationBackend      │ │ │  │
+│  │  │  │  - Object Graph 생성              │ │ │  │
+│  │  │  └──────────────────────────────────┘ │ │  │
+│  │  └────────────────────────────────────────┘ │  │
+│  │                                              │  │
+│  │  ┌────────────────────────────────────────┐ │  │
+│  │  │ JCEFVisualizationPanel                 │ │  │
+│  │  │  - JBCefBrowser                        │ │  │
+│  │  │  - JavaScript Bridge                   │ │  │
+│  │  │  - showVisualization(json)            │ │  │
+│  │  └────────────────────────────────────────┘ │  │
+│  └──────────────────────────────────────────────┘  │
+│                                                     │
+│  ┌──────────────────────────────────────────────┐  │
+│  │ JCEF WebView (React UI)                      │  │
+│  │                                              │  │
+│  │  ┌────────────────────────────────────────┐ │  │
+│  │  │ window.visualizerAPI                   │ │  │
+│  │  │  - updateVisualization(data)          │ │  │
+│  │  └────────────────────────────────────────┘ │  │
+│  │                                              │  │
+│  │  ┌────────────────────────────────────────┐ │  │
+│  │  │ VisualizationRouter                    │ │  │
+│  │  │  - 타입 판별 (data.kind)              │ │  │
+│  │  │  - 적절한 렌더러 선택                 │ │  │
+│  │  └────────────────────────────────────────┘ │  │
+│  │                                              │  │
+│  │  ┌────────────────────────────────────────┐ │  │
+│  │  │ Renderers                              │ │  │
+│  │  │  - GraphRenderer (vis.js)             │ │  │
+│  │  │  - TreeRenderer (SVG)                 │ │  │
+│  │  │  - ArrayRenderer (D3.js)              │ │  │
+│  │  │  - TableRenderer (Perspective.js)     │ │  │
+│  │  │  - PlotlyRenderer                     │ │  │
+│  │  │  - ... (13개 타입)                    │ │  │
+│  │  └────────────────────────────────────────┘ │  │
+│  └──────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────┘
+```
 
-2. **성능 제약**
-   - 매우 큰 데이터 구조 (10,000+ 요소)는 페이지네이션 필요
-   - 실시간 애니메이션은 CPU 사용량 증가
+### 5.2 실시간 업데이트 흐름
 
-3. **언어 제약**
-   - 각 언어별 디버거 프로토콜에 의존
-   - 일부 언어는 제한적 지원 (C++, Go 등)
-
-4. **보안 제약**
-   - 임의 코드 실행 불가, 디버거 컨텍스트만 사용
-   - 외부 네트워크 통신 없음
-
-### 8.2 가정
-
-1. **사용자 환경**
-   - 사용자는 기본적인 디버거 사용법을 알고 있음
-   - 충분한 메모리와 CPU를 가진 개발 환경
-
-2. **데이터 구조**
-   - 사용자의 데이터 구조는 표준적인 패턴을 따름
-   - 순환 참조가 있는 경우 적절히 처리됨
-
-3. **IDE 호환성**
-   - IntelliJ Platform API는 하위 호환성 유지
-   - JCEF는 계속 지원됨
+```
+[사용자 F8 스텝 실행]
+        ↓
+XDebugSession.sessionPaused()
+        ↓
+DebuggerListener.onSuspend()
+        ↓
+VisualizationWatchModel.refresh()
+   ├─ 1. 이전 요청 취소 (CancellationToken)
+   ├─ 2. 상태 = "loading"
+   └─ 3. 비동기 평가 시작
+        ↓
+DispatchingVisualizationBackend.getVisualizationData(expression)
+   ├─ 언어 감지 (Java/Kotlin/Python/JS/Generic)
+   └─ 적절한 백엔드 선택
+        ↓
+[예: JvmVisualizationBackend]
+   ├─ ExpressionEvaluator.evaluate(expression)
+   ├─ JdiValueConverter.convert(jdiValue)
+   ├─ extractors.selectBestExtractor(value)
+   └─ extractor.extract(value) → VisualizationData
+        ↓
+JSON 직렬화
+        ↓
+상태 = "data" (Observable 변경)
+        ↓
+autorun 트리거 (MobX 또는 Kotlin Flow)
+        ↓
+JCEFVisualizationPanel.showVisualization(json)
+   ├─ JSON 이스케이프 처리
+   └─ browser.executeJavaScript("window.visualizerAPI.updateVisualization('...')")
+        ↓
+[JCEF WebView - React]
+        ↓
+window.visualizerAPI.updateVisualization(jsonStr)
+   ├─ JSON 파싱
+   └─ setState({ visualizationData: data })
+        ↓
+React 리렌더링
+        ↓
+VisualizationRouter
+   ├─ if (data.kind.graph) → <GraphRenderer />
+   ├─ if (data.kind.tree) → <TreeRenderer />
+   ├─ if (data.kind.array) → <ArrayRenderer />
+   └─ ...
+        ↓
+[사용자에게 시각화 표시] (< 100ms)
+```
 
 ---
 
-## 9. 개발 로드맵
+## 6. 비기능 요구사항
 
-### Phase 0: 기획 및 설계 (2주) ✅
-- [x] PRD 작성
-- [x] 아키텍처 설계
-- [x] UI/UX 디자인
-- [x] 기술 스택 결정
+### 6.1 성능
 
-### Phase 1: MVP 개발 (8주)
-**Week 1-2: 플러그인 인프라**
-- [ ] 플러그인 프로젝트 초기화
-- [ ] 도구 윈도우 생성
-- [ ] 디버거 API 통합
-- [ ] 표현식 평가 기본 구현
+| 메트릭 | 목표 | VSCode 기준 |
+|--------|------|------------|
+| 표현식 평가 시간 | < 500ms | < 500ms |
+| 시각화 렌더링 시간 | < 100ms (1000개 요소) | < 100ms |
+| F8 스텝 → UI 업데이트 | < 100ms | < 100ms |
+| 메모리 사용량 | < 200MB | < 150MB |
+| 최대 노드 수 (범용 모드) | 50개 | 50개 |
 
-**Week 3-4: 시각화 엔진**
-- [ ] React 프로젝트 초기화
-- [ ] JCEF 통합
-- [ ] 기본 렌더러 (배열, 트리)
-- [ ] JSON 브리지 구축
+### 6.2 호환성
 
-**Week 5-6: 언어 지원**
-- [ ] Java/Kotlin 데이터 추출기
-- [ ] Python 데이터 추출기
-- [ ] 타입 감지 로직
+| 카테고리 | 요구사항 |
+|---------|---------|
+| IDE | IntelliJ IDEA 2023.2+, PyCharm, WebStorm, CLion |
+| JDK | 17+ |
+| JCEF | 지원하는 IDE 버전 |
+| OS | Windows 10+, macOS 11+, Linux (Ubuntu 20.04+) |
 
-**Week 7-8: 통합 및 테스트**
-- [ ] 전체 플로우 통합
-- [ ] 샘플 프로젝트 테스트
-- [ ] 버그 수정
-- [ ] 문서 작성
+### 6.3 다중 언어 지원
 
-### Phase 2: 고급 기능 (6주)
-- [ ] 그래프 알고리즘 시각화
-- [ ] DP 테이블 시각화
-- [ ] JavaScript/TypeScript 지원
-- [ ] 애니메이션 기본 구현
+| 언어 | 지원 레벨 | 데이터 추출 방식 | 우선순위 |
+|------|----------|-----------------|---------|
+| Java | **Tier 1** | JDI 네이티브 | Phase 1 ✅ |
+| Kotlin | **Tier 1** | JDI 네이티브 | Phase 1 ✅ |
+| JavaScript | **Tier 1** | 런타임 코드 주입 | Phase 3 |
+| TypeScript | **Tier 1** | 런타임 코드 주입 | Phase 3 |
+| Python | **Tier 2** | 외부 모듈 | Phase 3 |
+| C++ | **Tier 3** | 변수 참조 탐색 | Phase 4 |
+| C# | **Tier 3** | 변수 참조 탐색 | Phase 4 |
+| Go | **Tier 3** | 변수 참조 탐색 | Phase 4 |
+| Rust | **Tier 3** | 변수 참조 탐색 | Phase 4 |
 
-### Phase 3: 폴리싱 (4주)
+---
+
+## 7. 개발 로드맵
+
+### Phase 0: 기획 및 분석 (2주) ✅ **완료**
+- [x] VSCode Debug Visualizer 코드 분석
+- [x] 핵심 아키텍처 파악
+- [x] PRD 재작성
+- [x] 기술 스택 확정
+
+### Phase 1: 기본 인프라 (4주) ✅ **완료**
+- [x] 플러그인 프로젝트 초기화
+- [x] JDI 기반 값 추출 (ExpressionEvaluator)
+- [x] JCEF 웹뷰 통합
+- [x] React UI 기본 구조
+- [x] 배열 시각화 (D3.js)
+- [x] TDD 환경 구축 (35개 테스트)
+
+### Phase 2: 실시간 모니터링 (4주) ⏳ **진행 중**
+- [ ] 디버거 이벤트 리스너 (XDebugSessionListener)
+- [ ] 실시간 업데이트 파이프라인
+- [ ] Observable 상태 관리
+- [ ] 취소 토큰 및 디바운싱
+- [ ] Graph, Tree, Table 렌더러
+- [ ] 타입 자동 감지 시스템
+- [ ] 우선순위 기반 추출기
+
+**목표**: VSCode Debug Visualizer의 핵심 기능 재현 (Java/Kotlin)
+
+### Phase 3: 다중 언어 지원 (6주)
+- [ ] JavaScript/TypeScript 런타임 코드 주입
+- [ ] Chrome DevTools Protocol 연동
+- [ ] Data Extractor API 포팅
+- [ ] Python debugpy 연동
+- [ ] `pydebugvisualizer` 모듈 개발
+- [ ] 범용 백엔드 (C++, C#, Go, Rust)
+
+**목표**: VSCode와 동일한 언어 지원 수준
+
+### Phase 4: 고급 기능 (4주)
+- [ ] 사용자 정의 추출기 API
+- [ ] 실행 히스토리 (Time-Travel)
+- [ ] 내보내기 (PNG, SVG, GIF, HTML)
 - [ ] 성능 최적화
-- [ ] UI/UX 개선
-- [ ] 추가 테스트
-- [ ] 베타 릴리스
-
-### Phase 4: 정식 출시 (2주)
-- [ ] 최종 버그 수정
 - [ ] 문서 완성
+
+**목표**: VSCode 기능 + α (JetBrains 전용 기능)
+
+### Phase 5: 배포 (2주)
+- [ ] 베타 테스트
+- [ ] 버그 수정
 - [ ] JetBrains Marketplace 등록
 - [ ] 마케팅 및 홍보
 
 ---
 
-## 10. 위험 관리
+## 8. 성공 지표
+
+### 8.1 기술 지표
+
+| 지표 | Phase 2 목표 | Phase 3 목표 |
+|------|-------------|-------------|
+| 지원 언어 | Java, Kotlin | +JS, TS, Python |
+| 시각화 타입 | 5개 (graph, tree, array, table, text) | 13개 (전체) |
+| 테스트 커버리지 | 80%+ | 90%+ |
+| 성능 | F8 → UI < 200ms | F8 → UI < 100ms |
+
+### 8.2 사용자 지표
+
+| 지표 | 6개월 목표 | 1년 목표 |
+|------|-----------|---------|
+| 다운로드 수 | 5,000+ | 20,000+ |
+| 활성 사용자 (MAU) | 500+ | 2,000+ |
+| 사용자 평점 | 4.0+ / 5.0 | 4.5+ / 5.0 |
+| GitHub Stars | 100+ | 500+ |
+
+---
+
+## 9. 위험 관리
 
 | 위험 | 확률 | 영향 | 대응 전략 |
 |------|------|------|-----------|
-| IntelliJ Platform API 변경 | 중간 | 높음 | 안정 버전 API 사용, 변경 모니터링 |
-| 성능 문제 | 높음 | 중간 | 초기부터 벤치마크, 최적화 우선순위 |
-| 언어별 디버거 호환성 | 높음 | 높음 | Tier 시스템으로 점진적 지원 |
-| 사용자 채택 저조 | 중간 | 높음 | 베타 테스트, 사용자 피드백 반영 |
-| 보안 취약점 | 낮음 | 높음 | 코드 리뷰, 보안 감사 |
+| JCEF API 변경 | 낮음 | 높음 | Chromium 버전 고정, 마이그레이션 가이드 모니터링 |
+| XDebugger API 변경 | 중간 | 높음 | 안정 API만 사용, 여러 IDE 버전 테스트 |
+| 성능 문제 (대용량 데이터) | 높음 | 중간 | 노드 수 제한, 가상 스크롤링, 페이지네이션 |
+| 언어별 디버거 호환성 | 높음 | 중간 | Tier 시스템으로 점진적 지원 |
+| VSCode와의 차별화 부족 | 중간 | 높음 | JetBrains 전용 기능 추가 (예: IntelliJ 코드 인사이트 통합) |
 
 ---
 
-## 11. 출시 전략
+## 10. 차별화 전략
 
-### 11.1 베타 테스트
-- **기간**: 정식 출시 4주 전
-- **참여자**: 50명 (학생, 개발자, 강사)
-- **피드백 수집**: 설문조사, 인터뷰, 텔레메트리
+### 10.1 VSCode Debug Visualizer 대비 장점
 
-### 11.2 마케팅
-- GitHub README 및 문서 완성
-- JetBrains Marketplace 등록
-- Reddit, HackerNews 포스팅
-- 유튜브 데모 영상
-- 블로그 포스트
+1. **JDI 네이티브 접근**: Java/Kotlin에서 더 강력한 데이터 추출
+2. **IntelliJ 통합**: 코드 인사이트, 리팩토링 힌트 연동 (Phase 4)
+3. **JetBrains 생태계**: PyCharm, WebStorm, CLion 등 모든 IDE 지원
+4. **기업 사용자**: JetBrains 사용자는 대부분 기업 환경
 
-### 11.3 지원 채널
-- GitHub Issues (버그 리포트)
-- GitHub Discussions (질문, 토론)
-- 이메일 (중요 문의)
+### 10.2 독자적인 기능 (Phase 4)
+
+- **코드 하이라이트 연동**: 시각화에서 노드 클릭 → 에디터에서 해당 코드 하이라이트
+- **리팩토링 제안**: 비효율적인 자료구조 감지 시 리팩토링 제안
+- **성능 프로파일링**: 시각화에 CPU/메모리 사용량 오버레이
+- **팀 협업**: 시각화 스냅샷 공유 (URL 생성)
 
 ---
 
-## 12. 측정 및 분석
+## 11. 참고 자료
 
-### 12.1 주요 메트릭
-
-**사용량 메트릭** (옵트인):
-- DAU/MAU (일간/월간 활성 사용자)
-- 세션당 평균 시각화 수
-- 가장 많이 사용되는 시각화 타입
-- 평균 세션 길이
-
-**품질 메트릭**:
-- 크래시율
-- 오류 발생 빈도
-- 응답 시간 (P50, P95, P99)
-
-**비즈니스 메트릭**:
-- 다운로드 수 (누적, 주간)
-- 사용자 평점 및 리뷰
-- 커뮤니티 활동 (이슈, PR, 포럼)
-
-### 12.2 A/B 테스트 계획
-- UI 레이아웃 (좌측 vs 하단 도구 윈도우)
-- 기본 시각화 타입 선택 로직
-- 애니메이션 기본 속도
-
----
-
-## 13. 부록
-
-### 13.1 용어 정의
-
-- **시각화**: 데이터 구조를 그래픽으로 표현한 것
-- **렌더러**: 특정 시각화 타입을 그리는 컴포넌트
-- **추출기**: 디버거에서 데이터를 JSON으로 변환하는 모듈
-- **도구 윈도우**: IDE 내 독립적인 UI 패널
-
-### 13.2 참고 자료
-
-- [IntelliJ Platform SDK 문서](https://plugins.jetbrains.com/docs/intellij/)
 - [VSCode Debug Visualizer GitHub](https://github.com/hediet/vscode-debug-visualizer)
-- [D3.js 예제](https://observablehq.com/@d3/gallery)
+- [VSCode Debug Visualizer Marketplace](https://marketplace.visualstudio.com/items?itemName=hediet.debug-visualizer)
+- [IntelliJ Platform SDK 문서](https://plugins.jetbrains.com/docs/intellij/)
+- [JDI (Java Debug Interface) 문서](https://docs.oracle.com/javase/8/docs/jdk/api/jpda/jdi/)
+- [JCEF 문서](https://plugins.jetbrains.com/docs/intellij/jcef.html)
+- [Visualization Data Schema](https://hediet.github.io/visualization/docs/visualization-data-schema.json)
 
-### 13.3 변경 이력
+---
+
+## 12. 변경 이력
 
 | 버전 | 날짜 | 변경 내용 | 작성자 |
 |------|------|-----------|--------|
-| 1.0.0 | 2024-11-10 | 초안 작성 | - |
+| 1.0.0 | 2024-11-10 | 초안 작성 (알고리즘 시각화 중심) | - |
+| 2.0.0 | 2025-01-12 | 전면 재작성 (VSCode Debug Visualizer 기반, 실시간 모니터링 중심) | - |
 
 ---
 
-**승인자**: TBD
-**다음 리뷰 예정일**: TBD
+**현재 상태**: Phase 1 완료, Phase 2 진행 중
+**다음 마일스톤**: 실시간 모니터링 시스템 구축 (4주)
+**최종 목표**: JetBrains 생태계의 VSCode Debug Visualizer
