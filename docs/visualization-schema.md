@@ -1,619 +1,684 @@
-# 시각화 데이터 스키마
+# 시각화 데이터 스키마 (v2.0.0 - VSCode 호환)
 
-이 문서는 데이터 추출 레이어와 시각화 엔진 간에 흐르는 시각화 데이터의 JSON 스키마를 정의합니다.
+이 문서는 **VSCode Debug Visualizer**와 100% 호환되는 시각화 데이터 JSON 스키마를 정의합니다.
 
-## 기본 스키마
+**참고**: [VSCode Visualization Data Schema (공식)](https://hediet.github.io/visualization/docs/visualization-data-schema.json)
 
-모든 시각화 데이터는 다음 기본 구조를 따라야 합니다:
+## 기본 구조 (Discriminated Union)
+
+VSCode Debug Visualizer는 `kind` 필드를 discriminated union 방식으로 사용합니다:
 
 ```typescript
 interface VisualizationData {
-  kind: VisualizationKind;
-  timestamp: number;
-  metadata: Metadata;
-  data: any; // kind별 데이터
-  config?: Config;
+  kind: {
+    [visualizationType: string]: true;
+  };
+  // kind별 추가 필드
 }
-
-interface Metadata {
-  language: string;
-  expression: string;
-  type: string;
-  lineNumber?: number;
-  fileName?: string;
-}
-
-interface Config {
-  layout?: 'hierarchical' | 'force-directed' | 'grid' | 'circular';
-  animation?: boolean;
-  theme?: 'light' | 'dark';
-  highlightNodes?: number[] | string[];
-  autoFit?: boolean;
-}
-
-type VisualizationKind =
-  | 'graph'
-  | 'tree'
-  | 'array'
-  | 'table'
-  | 'plotly'
-  | 'grid'
-  | 'text';
 ```
 
-## Kind별 스키마
+**예시**:
+```json
+{
+  "kind": { "array": true },
+  "items": [...]
+}
+```
 
-### 1. 그래프 시각화
+## 13개 시각화 타입
+
+### 1. Graph (그래프 구조)
 
 일반 그래프(방향/무방향, 가중치/비가중치)용입니다.
 
 ```typescript
-interface GraphVisualizationData extends VisualizationData {
-  kind: 'graph';
-  data: {
-    nodes: GraphNode[];
-    edges: GraphEdge[];
-    directed?: boolean;
-  };
-}
-
-interface GraphNode {
-  id: string | number;
-  label: string;
-  color?: string;
-  size?: number;
-  metadata?: Record<string, any>;
-}
-
-interface GraphEdge {
-  source: string | number;
-  target: string | number;
-  weight?: number;
-  label?: string;
-  color?: string;
-  directed?: boolean;
+interface GraphVisualizationData {
+  kind: { graph: true };
+  nodes: Array<{
+    id: string;
+    label?: string;
+    color?: string;
+    shape?: "box" | "circle" | "ellipse" | "diamond";
+  }>;
+  edges: Array<{
+    from: string;
+    to: string;
+    label?: string;
+    color?: string;
+    dashes?: boolean;
+    arrows?: "to" | "from" | "both";
+  }>;
 }
 ```
 
-**예제:**
+**예시 (DFS 그래프)**:
 ```json
 {
-  "kind": "graph",
-  "timestamp": 1699876543210,
-  "metadata": {
-    "language": "java",
-    "expression": "graph",
-    "type": "Graph<Integer>"
-  },
-  "data": {
-    "nodes": [
-      {"id": 1, "label": "A", "color": "#ff6b6b"},
-      {"id": 2, "label": "B", "color": "#4ecdc4"},
-      {"id": 3, "label": "C", "color": "#45b7d1"}
-    ],
-    "edges": [
-      {"source": 1, "target": 2, "weight": 5},
-      {"source": 2, "target": 3, "weight": 3}
-    ],
-    "directed": true
-  },
-  "config": {
-    "layout": "force-directed",
-    "highlightNodes": [1]
-  }
+  "kind": { "graph": true },
+  "nodes": [
+    { "id": "A", "label": "Node A", "color": "#4ecdc4" },
+    { "id": "B", "label": "Node B", "color": "#ff6b6b" },
+    { "id": "C", "label": "Node C", "color": "#4ecdc4" }
+  ],
+  "edges": [
+    { "from": "A", "to": "B", "label": "edge 1" },
+    { "from": "A", "to": "C", "label": "edge 2" }
+  ]
 }
 ```
 
-### 2. 트리 시각화
+### 2. Tree (트리 구조)
 
-계층적 트리 구조용입니다.
+이진 트리, AVL, Red-Black 트리 등에 사용됩니다.
 
 ```typescript
-interface TreeVisualizationData extends VisualizationData {
-  kind: 'tree';
-  data: TreeNode;
+interface TreeVisualizationData {
+  kind: { tree: true };
+  root: TreeNode;
 }
 
 interface TreeNode {
-  value: any;
-  children?: TreeNode[];
-  left?: TreeNode;  // 이진 트리용
-  right?: TreeNode; // 이진 트리용
-  color?: string;
-  metadata?: {
-    height?: number;
-    balanceFactor?: number; // AVL 트리용
-    color?: 'red' | 'black'; // Red-Black 트리용
-    [key: string]: any;
-  };
-}
-```
-
-**예제 (이진 트리):**
-```json
-{
-  "kind": "tree",
-  "timestamp": 1699876543210,
-  "metadata": {
-    "language": "python",
-    "expression": "root",
-    "type": "TreeNode"
-  },
-  "data": {
-    "value": 10,
-    "left": {
-      "value": 5,
-      "left": {"value": 3},
-      "right": {"value": 7}
-    },
-    "right": {
-      "value": 15,
-      "left": {"value": 12},
-      "right": {"value": 20}
-    }
-  },
-  "config": {
-    "layout": "hierarchical"
-  }
-}
-```
-
-### 3. 배열 시각화
-
-1차원 배열 및 리스트용입니다.
-
-```typescript
-interface ArrayVisualizationData extends VisualizationData {
-  kind: 'array';
-  data: {
-    values: any[];
-    pointers?: Pointer[];
-    ranges?: Range[];
-  };
-}
-
-interface Pointer {
-  index: number;
+  id: string;
   label: string;
+  children?: TreeNode[];
   color?: string;
-}
-
-interface Range {
-  start: number;
-  end: number;
-  label?: string;
-  color?: string;
+  isMarked?: boolean;
 }
 ```
 
-**예제:**
+**예시 (이진 트리)**:
 ```json
 {
-  "kind": "array",
-  "timestamp": 1699876543210,
-  "metadata": {
-    "language": "kotlin",
-    "expression": "arr",
-    "type": "IntArray"
-  },
-  "data": {
-    "values": [3, 1, 4, 1, 5, 9, 2, 6],
-    "pointers": [
-      {"index": 0, "label": "left", "color": "#ff6b6b"},
-      {"index": 7, "label": "right", "color": "#4ecdc4"}
-    ],
-    "ranges": [
-      {"start": 2, "end": 5, "label": "window", "color": "#ffe66d"}
+  "kind": { "tree": true },
+  "root": {
+    "id": "1",
+    "label": "10",
+    "children": [
+      {
+        "id": "2",
+        "label": "5",
+        "children": []
+      },
+      {
+        "id": "3",
+        "label": "15",
+        "children": []
+      }
     ]
   }
 }
 ```
 
-### 4. 테이블 시각화
+### 3. Array (배열/리스트)
 
-2D 배열, 행렬, DP 테이블용입니다.
-
-```typescript
-interface TableVisualizationData extends VisualizationData {
-  kind: 'table';
-  data: {
-    rows: any[][];
-    rowHeaders?: string[];
-    columnHeaders?: string[];
-    cellColors?: CellColor[][];
-    highlightCells?: CellPosition[];
-  };
-}
-
-interface CellColor {
-  row: number;
-  col: number;
-  color: string;
-}
-
-interface CellPosition {
-  row: number;
-  col: number;
-}
-```
-
-**예제 (DP 테이블):**
-```json
-{
-  "kind": "table",
-  "timestamp": 1699876543210,
-  "metadata": {
-    "language": "java",
-    "expression": "dp",
-    "type": "int[][]"
-  },
-  "data": {
-    "rows": [
-      [0, 1, 1, 1, 1],
-      [1, 1, 2, 3, 4],
-      [1, 2, 3, 5, 8]
-    ],
-    "rowHeaders": ["", "a", "ab"],
-    "columnHeaders": ["", "b", "ba", "bab", "baba"],
-    "cellColors": [
-      [2, 4, "#4ecdc4"]
-    ],
-    "highlightCells": [
-      {"row": 2, "col": 4}
-    ]
-  }
-}
-```
-
-### 5. Plotly 시각화
-
-Plotly.js를 사용한 차트 및 플롯용입니다.
+배열, 리스트, 정렬 알고리즘 등에 사용됩니다.
 
 ```typescript
-interface PlotlyVisualizationData extends VisualizationData {
-  kind: 'plotly';
-  data: {
-    data: Plotly.Data[];
-    layout?: Partial<Plotly.Layout>;
-  };
+interface ArrayVisualizationData {
+  kind: { array: true };
+  items: Array<{
+    value: number | string;
+    label?: string;
+    color?: string;
+    isHighlighted?: boolean;
+  }>;
 }
 ```
 
-**예제 (선 차트):**
+**예시 (정수 배열)**:
 ```json
 {
-  "kind": "plotly",
-  "timestamp": 1699876543210,
-  "metadata": {
-    "language": "python",
-    "expression": "walk",
-    "type": "list"
-  },
-  "data": {
-    "data": [{
-      "x": [0, 1, 2, 3, 4, 5],
-      "y": [0, 1, 0, -1, 0, 1],
-      "type": "scatter",
-      "mode": "lines+markers",
-      "name": "랜덤 워크"
-    }],
-    "layout": {
-      "title": "랜덤 워크 시각화",
-      "xaxis": {"title": "단계"},
-      "yaxis": {"title": "위치"}
+  "kind": { "array": true },
+  "items": [
+    { "value": 5, "color": "#4ecdc4" },
+    { "value": 1, "color": "#ff6b6b", "isHighlighted": true },
+    { "value": 9, "color": "#4ecdc4" }
+  ]
+}
+```
+
+### 4. Table (2D 테이블)
+
+2D 배열, DP 테이블, 행렬 등에 사용됩니다.
+
+```typescript
+interface TableVisualizationData {
+  kind: { table: true };
+  rows: Array<{ [key: string]: any }>;
+  columns?: Array<{
+    key: string;
+    label: string;
+  }>;
+}
+```
+
+**예시 (DP 테이블)**:
+```json
+{
+  "kind": { "table": true },
+  "columns": [
+    { "key": "i", "label": "Index" },
+    { "key": "value", "label": "Value" }
+  ],
+  "rows": [
+    { "i": 0, "value": 0 },
+    { "i": 1, "value": 1 },
+    { "i": 2, "value": 1 }
+  ]
+}
+```
+
+### 5. Plotly (차트)
+
+히스토그램, 선 그래프, 산점도 등 Plotly.js 기반 차트에 사용됩니다.
+
+```typescript
+interface PlotlyVisualizationData {
+  kind: { plotly: true };
+  data: any[];  // Plotly.js data
+  layout?: any;  // Plotly.js layout
+}
+```
+
+**예시 (히스토그램)**:
+```json
+{
+  "kind": { "plotly": true },
+  "data": [
+    {
+      "x": [1, 2, 3, 4, 5],
+      "y": [10, 15, 13, 17, 20],
+      "type": "bar"
     }
+  ],
+  "layout": {
+    "title": "Sample Histogram"
   }
 }
 ```
 
-### 6. 그리드 시각화
+### 6. Grid (2D 그리드)
 
-2D 그리드(체스판, 미로 등)용입니다.
+체스판, 미로, 게임 맵 등에 사용됩니다.
 
 ```typescript
-interface GridVisualizationData extends VisualizationData {
-  kind: 'grid';
-  data: {
-    grid: GridCell[][];
-    width: number;
-    height: number;
-  };
-}
-
-interface GridCell {
-  value: any;
-  color?: string;
-  symbol?: string; // 유니코드 심볼 또는 이모지
-  metadata?: Record<string, any>;
+interface GridVisualizationData {
+  kind: { grid: true };
+  rows: number;
+  cols: number;
+  cells: Array<{
+    row: number;
+    col: number;
+    value?: any;
+    color?: string;
+    label?: string;
+  }>;
 }
 ```
 
-**예제 (N-Queens):**
+**예시 (미로)**:
 ```json
 {
-  "kind": "grid",
-  "timestamp": 1699876543210,
-  "metadata": {
-    "language": "cpp",
-    "expression": "board",
-    "type": "vector<vector<int>>"
-  },
-  "data": {
-    "width": 8,
-    "height": 8,
-    "grid": [
-      [
-        {"value": 0, "color": "#ffffff"},
-        {"value": 1, "color": "#ff6b6b", "symbol": "♕"}
+  "kind": { "grid": true },
+  "rows": 5,
+  "cols": 5,
+  "cells": [
+    { "row": 0, "col": 0, "color": "#000000", "label": "Wall" },
+    { "row": 0, "col": 1, "color": "#ffffff", "label": "Path" },
+    { "row": 0, "col": 2, "color": "#ffffff" }
+  ]
+}
+```
+
+### 7. Text (포맷된 텍스트)
+
+단순 텍스트 출력, JSON 데이터 등에 사용됩니다.
+
+```typescript
+interface TextVisualizationData {
+  kind: { text: true };
+  text: string;
+  mimeType?: string;  // "text/plain" | "text/html" | "text/markdown"
+}
+```
+
+**예시**:
+```json
+{
+  "kind": { "text": true },
+  "text": "Hello World",
+  "mimeType": "text/plain"
+}
+```
+
+### 8. MonacoText (코드 하이라이팅)
+
+소스 코드, JSON, XML 등 구문 강조가 필요한 텍스트에 사용됩니다.
+
+```typescript
+interface MonacoTextVisualizationData {
+  kind: { monacoText: true };
+  text: string;
+  language?: string;  // "javascript" | "python" | "java" | "json" | ...
+}
+```
+
+**예시 (JavaScript 코드)**:
+```json
+{
+  "kind": { "monacoText": true },
+  "text": "function hello() {\n  console.log('Hello World');\n}",
+  "language": "javascript"
+}
+```
+
+### 9. Image (이미지)
+
+Base64 인코딩 이미지 또는 URL 이미지에 사용됩니다.
+
+```typescript
+interface ImageVisualizationData {
+  kind: { image: true };
+  src: string;  // data:image/png;base64,... 또는 URL
+  alt?: string;
+  width?: number;
+  height?: number;
+}
+```
+
+**예시**:
+```json
+{
+  "kind": { "image": true },
+  "src": "data:image/png;base64,iVBORw0KG...",
+  "alt": "Algorithm Diagram",
+  "width": 800,
+  "height": 600
+}
+```
+
+### 10. SVG (SVG 직접 렌더링)
+
+SVG 마크업을 직접 렌더링합니다.
+
+```typescript
+interface SvgVisualizationData {
+  kind: { svg: true };
+  svgContent: string;  // SVG XML 문자열
+}
+```
+
+**예시**:
+```json
+{
+  "kind": { "svg": true },
+  "svgContent": "<svg><circle cx='50' cy='50' r='40' fill='red' /></svg>"
+}
+```
+
+### 11. Graphviz-Dot (DOT 언어 그래프)
+
+Graphviz DOT 언어로 정의된 그래프에 사용됩니다.
+
+```typescript
+interface GraphvizDotVisualizationData {
+  kind: { "graphviz-dot": true };
+  dotSrc: string;  // DOT 언어 문자열
+}
+```
+
+**예시**:
+```json
+{
+  "kind": { "graphviz-dot": true },
+  "dotSrc": "digraph G { A -> B; B -> C; }"
+}
+```
+
+### 12. AST (추상 구문 트리)
+
+프로그래밍 언어 AST 시각화에 사용됩니다.
+
+```typescript
+interface AstVisualizationData {
+  kind: { ast: true };
+  root: AstNode;
+}
+
+interface AstNode {
+  id: string;
+  label: string;
+  kind: string;  // "FunctionDeclaration" | "BinaryExpression" | ...
+  children?: AstNode[];
+  properties?: { [key: string]: any };
+}
+```
+
+**예시 (JavaScript AST)**:
+```json
+{
+  "kind": { "ast": true },
+  "root": {
+    "id": "1",
+    "label": "Program",
+    "kind": "Program",
+    "children": [
+      {
+        "id": "2",
+        "label": "FunctionDeclaration",
+        "kind": "FunctionDeclaration",
+        "properties": { "name": "hello" },
+        "children": []
+      }
+    ]
+  }
+}
+```
+
+### 13. Object-Graph (객체 참조 그래프)
+
+모든 언어의 fallback으로 사용되며, 객체 간 참조 관계를 시각화합니다.
+
+```typescript
+interface ObjectGraphVisualizationData {
+  kind: { "object-graph": true };
+  objects: Array<{
+    id: string;
+    label: string;
+    properties?: Array<{
+      key: string;
+      value: string;
+    }>;
+  }>;
+  references: Array<{
+    from: string;
+    to: string;
+    label?: string;
+  }>;
+}
+```
+
+**예시**:
+```json
+{
+  "kind": { "object-graph": true },
+  "objects": [
+    {
+      "id": "obj1",
+      "label": "MyObject",
+      "properties": [
+        { "key": "name", "value": "John" },
+        { "key": "age", "value": "30" }
       ]
-    ]
-  }
-}
-```
-
-### 7. 텍스트 시각화
-
-포맷된 텍스트 출력(HTML, JSON 등)용입니다.
-
-```typescript
-interface TextVisualizationData extends VisualizationData {
-  kind: 'text';
-  data: {
-    content: string;
-    format: 'plain' | 'html' | 'markdown' | 'json' | 'xml';
-    highlights?: TextHighlight[];
-  };
-}
-
-interface TextHighlight {
-  start: number;
-  end: number;
-  color?: string;
-  label?: string;
-}
-```
-
-## 색상 스킴
-
-### 사전 정의된 색상
-
-```typescript
-enum VisualizationColor {
-  PRIMARY = '#4ecdc4',
-  SECONDARY = '#ff6b6b',
-  SUCCESS = '#51cf66',
-  WARNING = '#ffd43b',
-  ERROR = '#ff6b6b',
-  INFO = '#339af0',
-  VISITED = '#adb5bd',
-  CURRENT = '#ff922b',
-  PATH = '#51cf66'
-}
-```
-
-### 테마 지원
-
-```typescript
-interface ThemeColors {
-  light: {
-    background: '#ffffff',
-    foreground: '#000000',
-    node: '#4ecdc4',
-    edge: '#adb5bd',
-    text: '#212529'
-  };
-  dark: {
-    background: '#1a1a1a',
-    foreground: '#ffffff',
-    node: '#4ecdc4',
-    edge: '#495057',
-    text: '#f1f3f5'
-  };
-}
-```
-
-## 검증
-
-모든 시각화 데이터는 렌더링 전에 스키마에 대해 검증되어야 합니다:
-
-```typescript
-function validateVisualizationData(data: any): boolean {
-  if (!data.kind || !data.timestamp || !data.metadata || !data.data) {
-    return false;
-  }
-
-  // kind별 검증
-  switch (data.kind) {
-    case 'graph':
-      return validateGraphData(data.data);
-    case 'tree':
-      return validateTreeData(data.data);
-    case 'array':
-      return validateArrayData(data.data);
-    // ... 기타 kind
-    default:
-      return false;
-  }
-}
-```
-
-## 확장
-
-스키마를 확장하여 커스텀 시각화 kind를 추가할 수 있습니다:
-
-```typescript
-interface CustomVisualizationData extends VisualizationData {
-  kind: 'custom:myViz';
-  data: {
-    // 커스텀 데이터 구조
-  };
-}
-```
-
-커스텀 렌더러 등록:
-
-```typescript
-VisualizerRegistry.register('custom:myViz', MyCustomRenderer);
-```
-
-## 알고리즘별 시각화 예제
-
-### DFS/BFS 시각화
-
-```json
-{
-  "kind": "graph",
-  "metadata": {
-    "language": "java",
-    "expression": "graph",
-    "type": "Graph"
-  },
-  "data": {
-    "nodes": [
-      {"id": 1, "label": "1", "color": "#51cf66"},  // 방문됨
-      {"id": 2, "label": "2", "color": "#ff922b"},  // 현재
-      {"id": 3, "label": "3", "color": "#ffffff"}   // 미방문
-    ],
-    "edges": [
-      {"source": 1, "target": 2, "color": "#51cf66"}, // 방문된 엣지
-      {"source": 2, "target": 3, "color": "#adb5bd"}  // 미방문 엣지
-    ]
-  },
-  "config": {
-    "highlightNodes": [2]
-  }
-}
-```
-
-### 정렬 알고리즘 시각화
-
-```json
-{
-  "kind": "array",
-  "metadata": {
-    "language": "python",
-    "expression": "arr",
-    "type": "list"
-  },
-  "data": {
-    "values": [5, 2, 8, 1, 9],
-    "pointers": [
-      {"index": 1, "label": "i", "color": "#ff6b6b"},
-      {"index": 3, "label": "j", "color": "#4ecdc4"}
-    ]
-  }
-}
-```
-
-### DP 테이블 시각화
-
-```json
-{
-  "kind": "table",
-  "metadata": {
-    "language": "kotlin",
-    "expression": "dp",
-    "type": "Array<IntArray>"
-  },
-  "data": {
-    "rows": [
-      [0, 0, 0, 0],
-      [0, 1, 1, 1],
-      [0, 1, 2, 2]
-    ],
-    "rowHeaders": ["", "item1", "item2"],
-    "columnHeaders": ["0", "1", "2", "3"],
-    "highlightCells": [
-      {"row": 2, "col": 3}
-    ]
-  }
-}
-```
-
-### AVL 트리 회전 시각화
-
-```json
-{
-  "kind": "tree",
-  "metadata": {
-    "language": "cpp",
-    "expression": "root",
-    "type": "AVLNode*"
-  },
-  "data": {
-    "value": 10,
-    "left": {
-      "value": 5,
-      "metadata": {"height": 2, "balanceFactor": 0}
     },
-    "right": {
-      "value": 15,
-      "color": "#ff922b",
-      "metadata": {"height": 1, "balanceFactor": -1}
-    },
-    "metadata": {"height": 3, "balanceFactor": 1}
-  }
-}
-```
-
-## 성능 최적화 가이드
-
-### 대용량 데이터 처리
-
-**페이지네이션:**
-```json
-{
-  "kind": "array",
-  "data": {
-    "values": [...], // 전체 데이터
-    "pagination": {
-      "pageSize": 100,
-      "currentPage": 0,
-      "totalPages": 10
+    {
+      "id": "obj2",
+      "label": "AnotherObject",
+      "properties": []
     }
-  }
+  ],
+  "references": [
+    { "from": "obj1", "to": "obj2", "label": "parent" }
+  ]
 }
 ```
 
-**레벨 제한 (트리):**
-```json
-{
-  "kind": "tree",
-  "data": {...},
-  "config": {
-    "maxDepth": 5,
-    "collapsible": true
-  }
+## Kotlin 데이터 클래스 (플러그인 구현용)
+
+```kotlin
+// 기본 인터페이스
+sealed class VisualizationData {
+    abstract val kind: Map<String, Boolean>
 }
+
+// 1. Graph
+data class GraphVisualizationData(
+    override val kind: Map<String, Boolean> = mapOf("graph" to true),
+    val nodes: List<GraphNode>,
+    val edges: List<GraphEdge>
+) : VisualizationData()
+
+data class GraphNode(
+    val id: String,
+    val label: String? = null,
+    val color: String? = null,
+    val shape: String? = null
+)
+
+data class GraphEdge(
+    val from: String,
+    val to: String,
+    val label: String? = null,
+    val color: String? = null,
+    val dashes: Boolean? = null
+)
+
+// 2. Tree
+data class TreeVisualizationData(
+    override val kind: Map<String, Boolean> = mapOf("tree" to true),
+    val root: TreeNode
+) : VisualizationData()
+
+data class TreeNode(
+    val id: String,
+    val label: String,
+    val children: List<TreeNode>? = null,
+    val color: String? = null,
+    val isMarked: Boolean? = null
+)
+
+// 3. Array
+data class ArrayVisualizationData(
+    override val kind: Map<String, Boolean> = mapOf("array" to true),
+    val items: List<ArrayItem>
+) : VisualizationData()
+
+data class ArrayItem(
+    val value: Any,
+    val label: String? = null,
+    val color: String? = null,
+    val isHighlighted: Boolean? = null
+)
+
+// 4. Table
+data class TableVisualizationData(
+    override val kind: Map<String, Boolean> = mapOf("table" to true),
+    val rows: List<Map<String, Any>>,
+    val columns: List<TableColumn>? = null
+) : VisualizationData()
+
+data class TableColumn(
+    val key: String,
+    val label: String
+)
+
+// 5. Plotly
+data class PlotlyVisualizationData(
+    override val kind: Map<String, Boolean> = mapOf("plotly" to true),
+    val data: List<Any>,
+    val layout: Map<String, Any>? = null
+) : VisualizationData()
+
+// 6. Grid
+data class GridVisualizationData(
+    override val kind: Map<String, Boolean> = mapOf("grid" to true),
+    val rows: Int,
+    val cols: Int,
+    val cells: List<GridCell>
+) : VisualizationData()
+
+data class GridCell(
+    val row: Int,
+    val col: Int,
+    val value: Any? = null,
+    val color: String? = null,
+    val label: String? = null
+)
+
+// 7. Text
+data class TextVisualizationData(
+    override val kind: Map<String, Boolean> = mapOf("text" to true),
+    val text: String,
+    val mimeType: String? = "text/plain"
+) : VisualizationData()
+
+// 8. MonacoText
+data class MonacoTextVisualizationData(
+    override val kind: Map<String, Boolean> = mapOf("monacoText" to true),
+    val text: String,
+    val language: String? = null
+) : VisualizationData()
+
+// 9. Image
+data class ImageVisualizationData(
+    override val kind: Map<String, Boolean> = mapOf("image" to true),
+    val src: String,
+    val alt: String? = null,
+    val width: Int? = null,
+    val height: Int? = null
+) : VisualizationData()
+
+// 10. SVG
+data class SvgVisualizationData(
+    override val kind: Map<String, Boolean> = mapOf("svg" to true),
+    val svgContent: String
+) : VisualizationData()
+
+// 11. Graphviz-Dot
+data class GraphvizDotVisualizationData(
+    override val kind: Map<String, Boolean> = mapOf("graphviz-dot" to true),
+    val dotSrc: String
+) : VisualizationData()
+
+// 12. AST
+data class AstVisualizationData(
+    override val kind: Map<String, Boolean> = mapOf("ast" to true),
+    val root: AstNode
+) : VisualizationData()
+
+data class AstNode(
+    val id: String,
+    val label: String,
+    val kind: String,
+    val children: List<AstNode>? = null,
+    val properties: Map<String, Any>? = null
+)
+
+// 13. Object-Graph
+data class ObjectGraphVisualizationData(
+    override val kind: Map<String, Boolean> = mapOf("object-graph" to true),
+    val objects: List<ObjectGraphObject>,
+    val references: List<ObjectGraphReference>
+) : VisualizationData()
+
+data class ObjectGraphObject(
+    val id: String,
+    val label: String,
+    val properties: List<ObjectProperty>? = null
+)
+
+data class ObjectProperty(
+    val key: String,
+    val value: String
+)
+
+data class ObjectGraphReference(
+    val from: String,
+    val to: String,
+    val label: String? = null
+)
 ```
 
-## 애니메이션 지원
-
-시각화는 애니메이션 단계를 포함할 수 있습니다:
+## TypeScript 타입 정의 (React UI용)
 
 ```typescript
-interface AnimatedVisualizationData extends VisualizationData {
-  animation?: {
-    steps: VisualizationData[];
-    duration: number; // 밀리초
-    loop?: boolean;
-  };
+// visualizer-ui/src/types/visualization.ts
+export type VisualizationData =
+  | GraphVisualizationData
+  | TreeVisualizationData
+  | ArrayVisualizationData
+  | TableVisualizationData
+  | PlotlyVisualizationData
+  | GridVisualizationData
+  | TextVisualizationData
+  | MonacoTextVisualizationData
+  | ImageVisualizationData
+  | SvgVisualizationData
+  | GraphvizDotVisualizationData
+  | AstVisualizationData
+  | ObjectGraphVisualizationData
+
+export interface GraphVisualizationData {
+  kind: { graph: true }
+  nodes: GraphNode[]
+  edges: GraphEdge[]
+}
+
+export interface GraphNode {
+  id: string
+  label?: string
+  color?: string
+  shape?: 'box' | 'circle' | 'ellipse' | 'diamond'
+}
+
+export interface GraphEdge {
+  from: string
+  to: string
+  label?: string
+  color?: string
+  dashes?: boolean
+  arrows?: 'to' | 'from' | 'both'
+}
+
+// ... (나머지 13개 타입 정의)
+```
+
+## 사용 예시
+
+### DataExtractor 구현
+
+```kotlin
+class ArrayExtractor : DataExtractor {
+    override val id = "array"
+    override val priority = 500
+
+    override fun canExtract(value: Any): Boolean {
+        return value is IntArray || value is Array<*> || value is List<*>
+    }
+
+    override fun extract(value: Any): VisualizationData {
+        val items = when (value) {
+            is IntArray -> value.map { ArrayItem(it) }
+            is Array<*> -> value.map { ArrayItem(it ?: "null") }
+            is List<*> -> value.map { ArrayItem(it ?: "null") }
+            else -> emptyList()
+        }
+
+        return ArrayVisualizationData(items = items)
+    }
 }
 ```
 
-**예제 (정렬 애니메이션):**
-```json
-{
-  "kind": "array",
-  "data": {...},
-  "animation": {
-    "steps": [
-      {"kind": "array", "data": {"values": [5,2,8,1,9]}},
-      {"kind": "array", "data": {"values": [2,5,8,1,9]}},
-      {"kind": "array", "data": {"values": [2,5,1,8,9]}},
-      {"kind": "array", "data": {"values": [1,2,5,8,9]}}
-    ],
-    "duration": 500
-  }
+### React 렌더러 구현
+
+```typescript
+export function ArrayRenderer({ data }: { data: ArrayVisualizationData }) {
+  const svgRef = useRef<SVGSVGElement>(null)
+
+  useEffect(() => {
+    if (!svgRef.current) return
+
+    const svg = d3.select(svgRef.current)
+    // D3.js 막대 그래프 렌더링
+    // ...
+  }, [data])
+
+  return <svg ref={svgRef}></svg>
 }
 ```
+
+---
+
+**마지막 업데이트**: 2025-01-12
+**문서 버전**: 2.0.0 (VSCode 100% 호환)
+**참고**: [VSCode Visualization Data Schema](https://hediet.github.io/visualization/docs/visualization-data-schema.json)

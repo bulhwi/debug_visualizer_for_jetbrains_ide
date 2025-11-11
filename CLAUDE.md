@@ -4,11 +4,11 @@
 
 ## 프로젝트 개요
 
-**Algorithm Debug Visualizer**는 JetBrains IDE(IntelliJ IDEA, PyCharm, WebStorm 등)를 위한 디버깅 시각화 플러그인입니다. VSCode Debug Visualizer에서 영감을 받아, 알고리즘 학습과 디버깅을 위한 강력한 시각화 도구를 JetBrains 생태계에 제공합니다.
+**Debug Visualizer for JetBrains IDEs**는 JetBrains IDE(IntelliJ IDEA, PyCharm, WebStorm 등)를 위한 범용 디버깅 시각화 플러그인입니다. VSCode Debug Visualizer의 핵심 기능을 JetBrains 생태계로 포팅하여, 모든 자료구조와 데이터 타입을 실시간으로 시각화합니다.
 
 ## 프로젝트 상태
 
-현재 프로젝트는 **Phase 1 완료** 상태이며, Phase 2 계획 단계입니다.
+현재 프로젝트는 **Phase 1 완료** 상태이며, **Phase 2-0 (코드 정리) 진행 중**입니다.
 
 ### Phase 1 완료 (2025-11-11) ✅
 **기본 프로토타입 구축 완료**
@@ -51,9 +51,27 @@
    - React: 10개 테스트 (Vitest, RTL)
    - 빌드 자동화: Gradle + npm
 
-### 다음 단계
-- 📋 Phase 2: 알고리즘별 맞춤 시각화 (정렬, 트리, DP 등)
-- 📋 Phase 3: 실시간 스텝 추적 및 애니메이션
+### Phase 2: 실시간 모니터링 시스템 (진행 중)
+
+**Phase 2-0: 코드 정리** (2025-01-12)
+- 🔴 [#32] AlgorithmDetector 제거 및 범용화
+- 🔴 [#33] SnapshotCollector 리팩토링 (VSCode 스키마 호환)
+- 🟠 [#34] React UI 리팩토링 (Play 버튼 제거, 실시간 모니터링)
+- 🟡 [#35] 통합 테스트 및 문서 업데이트
+
+**Phase 2 핵심 목표**:
+- ✅ 실시간 모니터링 (F8 스텝 → 즉시 UI 업데이트)
+- ✅ 브레이크포인트 위치 무관 (모든 변수 시각화)
+- ✅ 자료구조 중립적 (배열, 트리, 그래프, 스택, 큐 등)
+- ✅ 타입 자동 감지 (Priority-based Extractor System)
+- ✅ 다중 언어 지원 (Java, Kotlin, Python, JS/TS, C++, C#, Go, Rust)
+
+**다음 단계**:
+- 📋 Phase 2-1: 디버거 이벤트 리스너 (#23)
+- 📋 Phase 2-2: Observable 상태 관리 (#24)
+- 📋 Phase 2-3: Priority-based Extractor System (#25)
+- 📋 Phase 2-4: React 다중 렌더러 (#26)
+- 📋 Phase 2-5: 실시간 파이프라인 통합 (#27)
 
 ## 디렉토리 구조
 
@@ -74,8 +92,8 @@
 │   │   └── ui/          # JCEF 시각화 패널
 │   ├── src/test/kotlin/ # 테스트 코드 (35개)
 │   └── build.gradle.kts # Gradle 빌드 설정
-├── visualizer-ui/       # (예정) React 시각화 UI
-├── data-extraction/     # (예정) 언어별 데이터 추출기
+├── visualizer-ui/       # ✅ React 시각화 UI (React 18.2 + Vite + D3.js)
+├── data-extraction/     # (Phase 3) 언어별 데이터 추출기
 ├── README.md            # 프로젝트 README
 ├── CONTRIBUTING.md      # 기여 가이드
 └── CLAUDE.md           # 이 파일
@@ -172,7 +190,9 @@ main                # 안정 버전
 - `AlgorithmVisualizerPlugin`: 플러그인 진입점
 - `VisualizerToolWindowFactory`: 도구 윈도우 생성
 - `DebuggerIntegration`: 디버거 통합
-- `ExpressionEvaluator`: 표현식 평가
+- `DebuggerListener`: 실시간 이벤트 리스너 (XDebugSessionListener)
+- `ExpressionEvaluator`: 표현식 평가 (JDI 기반)
+- `JCEFVisualizationPanel`: JCEF 웹뷰 통합
 
 ### 2. 시각화 UI (`visualizer-ui/`)
 
@@ -183,10 +203,11 @@ main                # 안정 버전
 - 애니메이션 제어
 
 **주요 컴포넌트:**
-- `VisualizerController`: 메인 컨트롤러
-- `GraphRenderer`: 그래프 시각화
-- `TreeRenderer`: 트리 시각화
-- `ArrayRenderer`: 배열 시각화
+- `App.tsx`: 메인 애플리케이션 (VisualizationRouter)
+- `ArrayVisualizer.tsx`: 배열 시각화 (D3.js 막대 그래프) ✅
+- `GraphRenderer`: 그래프 시각화 (vis.js) - Phase 2-4
+- `TreeRenderer`: 트리 시각화 (SVG) - Phase 2-4
+- `TableRenderer`: 테이블 시각화 (Perspective.js) - Phase 2-4
 
 ### 3. 데이터 추출 (`data-extraction/`)
 
@@ -195,37 +216,73 @@ main                # 안정 버전
 - JSON 변환
 - 타입 감지
 
-**모듈:**
-- `java/`: Java 데이터 추출기
-- `kotlin/`: Kotlin 데이터 추출기
-- `python/`: Python 데이터 추출기
-- `javascript/`: JS/TS 데이터 추출기
+**언어별 지원 전략 (Tier 시스템)**:
+- **Tier 1** (Phase 1-2): Java/Kotlin (JDI 네이티브), JS/TS (런타임 코드 주입)
+- **Tier 2** (Phase 3): Python (외부 모듈 `pydebugvisualizer`)
+- **Tier 3** (Phase 4): C++, C#, Go, Rust (변수 참조 탐색)
 
-## 데이터 흐름
+## 데이터 흐름 (Phase 2 완료 후)
 
+### 실시간 모니터링 파이프라인
 ```
-1. 사용자가 표현식 입력 (예: "myTree")
-   ↓
-2. 플러그인이 디버거 API로 표현식 평가
-   ↓
-3. 데이터 추출기가 값을 JSON으로 변환
-   ↓
-4. JCEF 브리지를 통해 WebView로 전송
-   ↓
-5. React 컴포넌트가 적절한 렌더러 선택
-   ↓
-6. D3.js/Plotly로 시각화 렌더링
+[사용자 F8 스텝 실행]
+        ↓
+XDebugSession.sessionPaused()
+        ↓
+DebuggerListener.onSuspend()
+        ↓
+VisualizationWatchModel.refresh()
+   ├─ 1. 이전 요청 취소 (CancellationToken)
+   ├─ 2. 상태 = "loading"
+   └─ 3. 비동기 평가 시작
+        ↓
+DispatchingVisualizationBackend.getVisualizationData(expression)
+   ├─ 언어 감지 (Java/Kotlin/Python/JS/Generic)
+   └─ 적절한 백엔드 선택
+        ↓
+[예: JvmVisualizationBackend]
+   ├─ ExpressionEvaluator.evaluate(expression)
+   ├─ JdiValueConverter.convert(jdiValue)
+   ├─ extractors.selectBestExtractor(value)
+   └─ extractor.extract(value) → VisualizationData
+        ↓
+JSON 직렬화
+        ↓
+JCEFVisualizationPanel.showVisualization(json)
+        ↓
+[JCEF WebView - React]
+        ↓
+window.visualizerAPI.updateVisualization(data)
+        ↓
+VisualizationRouter (타입 판별)
+   ├─ if (data.kind.graph) → <GraphRenderer />
+   ├─ if (data.kind.tree) → <TreeRenderer />
+   ├─ if (data.kind.array) → <ArrayRenderer />
+   └─ ...
+        ↓
+[사용자에게 시각화 표시] (< 100ms)
 ```
 
-## 시각화 타입
+## 시각화 타입 (VSCode 호환 13개)
 
-1. **graph**: 그래프 구조 (DFS, BFS, 최단 경로 등)
-2. **tree**: 트리 구조 (이진 트리, AVL, RB 등)
-3. **array**: 배열 (정렬, 투 포인터 등)
-4. **table**: 2D 테이블 (DP, 행렬 등)
-5. **plotly**: 차트 (히스토그램, 선 그래프 등)
-6. **grid**: 2D 그리드 (체스판, 미로 등)
-7. **text**: 포맷된 텍스트
+### Phase 1 구현 완료 ✅
+1. **array**: 배열, 리스트 (막대 그래프, D3.js)
+
+### Phase 2-4 구현 예정
+2. **graph**: 그래프 구조 (vis.js)
+3. **tree**: 트리 구조 (SVG 기반)
+4. **table**: 2D 테이블 (Perspective.js)
+5. **plotly**: 차트 (Plotly.js)
+6. **grid**: 2D 그리드 (HTML Canvas)
+7. **text**: 포맷된 텍스트 (단순 렌더링)
+
+### Phase 3-4 구현 예정
+8. **monacoText**: 코드 하이라이팅 (Monaco Editor)
+9. **image**: 이미지 시각화 (base64, URL)
+10. **svg**: SVG 직접 렌더링
+11. **graphviz-dot**: DOT 언어 그래프 (Graphviz)
+12. **ast**: 추상 구문 트리 (AST)
+13. **object-graph**: 객체 참조 그래프 (모든 언어 fallback)
 
 ## 테스트 전략
 
@@ -255,9 +312,10 @@ cd plugin
 ./gradlew runIde  # 테스트 IDE 인스턴스 실행
 ```
 
-### E2E 테스트 (예정)
+### E2E 테스트 (Phase 2-5)
 - 샘플 프로젝트로 실제 디버깅 시나리오 테스트
-- 각 알고리즘 타입별 테스트 케이스
+- 각 시각화 타입별 테스트 케이스 (13개)
+- F8 스텝 → 실시간 업데이트 검증
 
 ## 성능 고려사항
 
@@ -326,18 +384,44 @@ cd visualizer-ui && npm run build
 ## 자주 묻는 질문 (FAQ)
 
 ### Q: 새로운 시각화 타입을 어떻게 추가하나요?
-1. `docs/visualization-schema.md`에 스키마 정의
-2. 데이터 추출기에서 변환 로직 구현
-3. `visualizer-ui/src/visualizers/`에 렌더러 추가
-4. `VisualizerController`에 등록
-5. 테스트 및 문서 작성
+1. `docs/visualization-schema.md`에 VSCode 호환 스키마 정의
+2. **Priority-based Extractor** 구현 (`DataExtractor` 인터페이스)
+   ```kotlin
+   class MyDataExtractor : DataExtractor {
+       override val id = "my-data-type"
+       override val priority = 550  // 높을수록 우선
+
+       override fun canExtract(value: Any) =
+           value.javaClass.name == "com.example.MyData"
+
+       override fun extract(value: Any): VisualizationData {
+           // JSON 변환 로직
+       }
+   }
+   ```
+3. `DataExtractorRegistry`에 등록
+4. `visualizer-ui/src/components/`에 React 렌더러 추가
+5. `App.tsx`의 `VisualizationRouter`에 등록
+6. 테스트 및 문서 작성
 
 ### Q: 새로운 언어 지원을 어떻게 추가하나요?
-1. `data-extraction/<language>/` 디렉토리 생성
-2. 언어별 디버거 프로토콜 연구
-3. 데이터 추출 로직 구현
-4. 플러그인 코어에 통합
-5. 테스트 케이스 작성
+
+**Tier 1 (런타임 코드 주입 또는 네이티브 API)**:
+1. 언어별 디버거 프로토콜 연구 (예: Chrome DevTools Protocol for JS)
+2. `VisualizationBackend` 구현 (예: `JsVisualizationBackend`)
+3. 런타임 코드 주입 또는 네이티브 API 사용
+4. 13개 기본 추출기 포팅
+5. `DispatchingVisualizationBackend`에 등록
+
+**Tier 2 (외부 모듈)**:
+1. 외부 모듈 개발 (예: `pydebugvisualizer` for Python)
+2. PyPI, npm 등에 배포
+3. 플러그인에서 모듈 호출
+
+**Tier 3 (변수 참조 탐색 - 범용 fallback)**:
+- 모든 언어 자동 지원 (`GenericVisualizationBackend`)
+- XDebugger API로 변수 참조 BFS 탐색
+- 객체 그래프 생성 (최대 50개 노드)
 
 ### Q: 성능 문제가 있을 때 어떻게 하나요?
 1. Chrome DevTools Profiler 사용
@@ -363,22 +447,37 @@ cd visualizer-ui && npm run build
 
 ---
 
-## 최근 업데이트 (2025-11-10)
+## 최근 업데이트
 
-### ✅ 완료된 주요 작업
-1. **int 타입 추출 문제 해결**: JDI를 사용하여 모든 프리미티브 타입 추출 성공
-2. **TDD 환경 구축**: 35개 단위 테스트, 100% 성공률, < 1초 실행
-3. **코드 리팩토링**: ExpressionEvaluator 상수 추출, 헬퍼 메서드 분리
-4. **문서 작성**:
-   - `docs/LESSONS_LEARNED.md`: 디버깅 과정에서 얻은 교훈
-   - `docs/TESTING.md`: TDD 워크플로우 및 테스트 가이드
+### 2025-01-12: 프로젝트 방향 재정립 (v2.0.0)
+**배경**: 사용자 피드백으로 전체 방향 전환
+- ❌ 기존: 정렬 알고리즘 전용, Play 버튼 애니메이션
+- ✅ 새로운: 범용 Debug Visualizer, F8 실시간 모니터링
+
+**주요 변경**:
+1. **PRD v2.0.0 작성**: VSCode Debug Visualizer 기반 재설계
+2. **GitHub Issues 재구성**: #23-#31 (Phase 2-4 로드맵)
+3. **코드 정리 계획**: #32-#35 (Phase 2-0)
+
+**핵심 원칙**:
+- 실시간 모니터링 우선 (F8 → 즉시 업데이트)
+- 브레이크포인트 위치 무관
+- 자료구조 중립적 (모든 타입 지원)
+- 타입 자동 감지 (Priority-based Extractor)
+- 다중 언어 지원 (Tier 1/2/3)
+
+### 2025-11-10: Phase 1 완료
+1. **JDI 기반 값 추출**: 모든 프리미티브 타입 지원
+2. **TDD 환경 구축**: 35개 테스트, 100% 성공률
+3. **JCEF + React 통합**: 웹 기반 시각화 완료
+4. **D3.js 배열 시각화**: 막대 그래프 구현
 
 ### 🔑 핵심 교훈
-- IntelliJ XDebugger API는 추상화 레이어이며, 복잡한 값 추출에는 JDI 직접 사용 필요
-- JDI 클래스는 final class라서 mocking 불가 → 로직 분리 필요
-- DebuggerCommandImpl을 통해 디버거 스레드에서 안전하게 JDI 접근
+- IntelliJ XDebugger API는 추상화 레이어 → 복잡한 값 추출은 JDI 직접 사용
+- JDI 클래스는 final → mocking 불가, 로직 분리 필요
+- VSCode Debug Visualizer는 Priority-based Extractor System 사용 → 우리도 동일하게 구현
 
 ---
 
-**마지막 업데이트**: 2025-11-10
-**문서 버전**: 1.1.0
+**마지막 업데이트**: 2025-01-12
+**문서 버전**: 2.0.0 (VSCode 기반)
