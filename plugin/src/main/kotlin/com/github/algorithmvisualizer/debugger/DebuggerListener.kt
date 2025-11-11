@@ -212,6 +212,8 @@ class DebuggerListener(private val debugSession: XDebugSession) {
             // 신뢰도가 0.5 이상이면 알고리즘 확정
             if (result.confidence >= 0.5) {
                 detectedAlgorithm = result.algorithm
+                // SnapshotCollector에도 알고리즘 설정
+                snapshotCollector?.setAlgorithm(result.algorithm.name)
             }
         } catch (e: Exception) {
             // 에러 무시

@@ -94,7 +94,7 @@ class SnapshotCollector {
             ),
             data = Data(
                 snapshots = snapshots,
-                algorithm = algorithm
+                algorithm = convertAlgorithmName(algorithm)
             )
         )
 
@@ -103,6 +103,23 @@ class SnapshotCollector {
             .create()
 
         return gson.toJson(data)
+    }
+
+    /**
+     * 알고리즘 이름을 React 형식으로 변환
+     * BUBBLE_SORT → bubble
+     * QUICK_SORT → quick
+     */
+    private fun convertAlgorithmName(algorithm: String?): String? {
+        return when (algorithm) {
+            "BUBBLE_SORT" -> "bubble"
+            "QUICK_SORT" -> "quick"
+            "MERGE_SORT" -> "merge"
+            "INSERTION_SORT" -> "insertion"
+            "SELECTION_SORT" -> "selection"
+            "HEAP_SORT" -> "heap"
+            else -> algorithm?.lowercase()
+        }
     }
 
     // 내부 데이터 클래스
