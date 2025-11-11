@@ -4,6 +4,7 @@ import com.github.algorithmvisualizer.collectors.SnapshotCollector
 import com.github.algorithmvisualizer.detectors.AlgorithmDetector
 import com.github.algorithmvisualizer.detectors.SortAlgorithm
 import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.frame.XStackFrame
@@ -16,6 +17,7 @@ import javax.swing.SwingUtilities
  * @property debugSession 디버그 세션
  */
 class DebuggerListener(private val debugSession: XDebugSession) {
+    private val logger = Logger.getInstance(DebuggerListener::class.java)
     private var enabled = true
     private var autoCapture = false
     private var snapshotCollector: SnapshotCollector? = null
@@ -166,24 +168,36 @@ class DebuggerListener(private val debugSession: XDebugSession) {
      * 디버거 suspend 이벤트 처리 (실제 스텝 이벤트)
      */
     private fun onSuspend() {
+        logger.warn("🔔 [DebuggerListener] onSuspend() called - enabled=$enabled, autoCapture=$autoCapture")
+
         SwingUtilities.invokeLater {
             try {
-                val stackFrame = debugSession.currentStackFrame ?: return@invokeLater
+                val stackFrame = debugSession.currentStackFrame
+                if (stackFrame == null) {
+                    logger.warn("❌ [DebuggerListener] No current stack frame")
+                    return@invokeLater
+                }
 
-                // 콜백 실행
-                stepCallback?.invoke()
+                logger.warn("✅ [DebuggerListener] Stack frame available")
 
                 // 알고리즘 감지 (아직 감지되지 않았으면)
                 if (algorithmDetector != null && detectedAlgorithm == null) {
+                    logger.warn("🔍 [DebuggerListener] Detecting algorithm...")
                     detectAlgorithmFromStackFrame(stackFrame)
+                    logger.warn("🎯 [DebuggerListener] Algorithm detected: $detectedAlgorithm")
                 }
 
-                // 스냅샷 수집
+                // 스냅샷 수집 (수집 완료 후 자동으로 callback 호출됨)
                 if (snapshotCollector != null && autoCapture) {
+                    logger.warn("📸 [DebuggerListener] Starting snapshot collection...")
                     captureSnapshotFromStackFrame(stackFrame)
+                } else {
+                    logger.warn("⚠️ [DebuggerListener] Snapshot collection skipped (collector=$snapshotCollector, autoCapture=$autoCapture)")
+                    // 자동 캡처가 비활성화된 경우에만 즉시 콜백 호출
+                    stepCallback?.invoke()
                 }
             } catch (e: Exception) {
-                // 에러 무시 (디버깅 중 일시적 오류 가능)
+                logger.warn("❌ [DebuggerListener] Error in onSuspend: ${e.message}", e)
             }
         }
     }
@@ -244,12 +258,17 @@ class DebuggerListener(private val debugSession: XDebugSession) {
      */
     private fun tryEvaluateArrayVariable(evaluator: ExpressionEvaluator, arrayNames: List<String>, index: Int) {
         if (index >= arrayNames.size) {
+            logger.warn("⚠️ [DebuggerListener] All array names tried, none found")
             return // 모든 변수명 시도 완료
         }
 
         val arrayName = arrayNames[index]
+        logger.warn("🔎 [DebuggerListener] Trying to evaluate variable: '$arrayName' (${index + 1}/${arrayNames.size})")
+
         evaluator.evaluateAndExtract(debugSession, arrayName)
             .thenAccept { (value, type) ->
+                logger.warn("📦 [DebuggerListener] Evaluation result - value=$value, type=$type")
+
                 if (value != null && type?.contains("[]") == true) {
                     // 배열 값 파싱 ("[1, 2, 3]" 또는 "{1, 2, 3}" 형식)
                     try {
@@ -265,11 +284,16 @@ class DebuggerListener(private val debugSession: XDebugSession) {
                             .filterNotNull()
                             .toIntArray()
 
+                        logger.warn("🎯 [DebuggerListener] Parsed array: ${arrayValues.contentToString()}")
+
                         if (arrayValues.isNotEmpty()) {
                             snapshotCollector?.captureSnapshot(arrayValues)
+                            val count = snapshotCollector?.getSnapshotCount() ?: 0
+                            logger.warn("✅ [DebuggerListener] Snapshot collected! Total snapshots: $count")
 
                             // 스냅샷이 수집되었으므로 콜백 호출 (시각화 트리거)
                             SwingUtilities.invokeLater {
+                                logger.warn("🔔 [DebuggerListener] Invoking stepCallback after snapshot")
                                 stepCallback?.invoke()
                             }
 
@@ -277,14 +301,17 @@ class DebuggerListener(private val debugSession: XDebugSession) {
                             return@thenAccept
                         }
                     } catch (e: Exception) {
+                        logger.warn("❌ [DebuggerListener] Array parsing failed: ${e.message}")
                         // 파싱 실패는 무시하고 다음 변수명 시도
                     }
                 }
 
                 // 평가 실패 또는 배열이 아닌 경우 다음 변수명 시도
+                logger.warn("➡️ [DebuggerListener] Trying next variable name...")
                 tryEvaluateArrayVariable(evaluator, arrayNames, index + 1)
             }
             .exceptionally {
+                logger.warn("❌ [DebuggerListener] Evaluation failed for '$arrayName': ${it.message}")
                 // 평가 실패 시 다음 변수명 시도
                 tryEvaluateArrayVariable(evaluator, arrayNames, index + 1)
                 null
