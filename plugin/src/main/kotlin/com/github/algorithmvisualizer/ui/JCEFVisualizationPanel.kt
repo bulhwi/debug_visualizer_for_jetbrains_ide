@@ -84,9 +84,23 @@ class JCEFVisualizationPanel : JPanel(BorderLayout()) {
                 logger.warn("HTML content length: ${htmlContent?.length ?: 0}")
 
                 if (htmlContent != null) {
+                    // HTML에서 CSS와 JS 파일명 동적 추출
+                    val cssFileRegex = Regex("""href="/assets/(index-[^"]+\.css)"""")
+                    val jsFileRegex = Regex("""src="/assets/(index-[^"]+\.js)"""")
+
+                    val cssFileName = cssFileRegex.find(htmlContent)?.groupValues?.get(1)
+                    val jsFileName = jsFileRegex.find(htmlContent)?.groupValues?.get(1)
+
+                    logger.warn("Detected CSS file: $cssFileName")
+                    logger.warn("Detected JS file: $jsFileName")
+
                     // CSS와 JS 파일을 인라인으로 삽입
-                    val cssContent = javaClass.getResourceAsStream("/web/assets/index-BIyWmH3D.css")?.bufferedReader()?.use { it.readText() }
-                    val jsContent = javaClass.getResourceAsStream("/web/assets/index-BQJihk9k.js")?.bufferedReader()?.use { it.readText() }
+                    val cssContent = cssFileName?.let {
+                        javaClass.getResourceAsStream("/web/assets/$it")?.bufferedReader()?.use { reader -> reader.readText() }
+                    }
+                    val jsContent = jsFileName?.let {
+                        javaClass.getResourceAsStream("/web/assets/$it")?.bufferedReader()?.use { reader -> reader.readText() }
+                    }
 
                     logger.warn("CSS content length: ${cssContent?.length ?: 0}")
                     logger.warn("JS content length: ${jsContent?.length ?: 0}")
